@@ -44,6 +44,7 @@ const SequestrationCalculator = () => {
     "Permitting & Approvals": 50000,
     "Legal": 50000,
     "Site Work / Materials Yard - Pre-Construction": 75000,
+    "Land Owner Split": 0.5,
     
     // Injection Costs
     "Setup Cost": 40000,
@@ -100,7 +101,7 @@ const SequestrationCalculator = () => {
     "CORCs/acft": 528,
     "CORC Sale Price": 200,
     "Truck Loads": 16,
-    "Hours of Injecion": 10
+    "Hours of Injecion": 10 
   });
 
   const [outputs, setOutputs] = useState({});
@@ -257,7 +258,7 @@ const SequestrationCalculator = () => {
     calc["Gross Margin"] = grossMargin - calc["Total Variable Costs"];
     
     // Total Overhead Costs
-    calc["Total Overhead Costs"] = calc["Developer Fee Amount"] + 
+    calc["Total Overhead Costs"] = 5 * (calc["Developer Fee Amount"] + 
                                   inputs["Accounting & Tax - Baker Tilly"] + 
                                   calc["Jerry Gutierrez Labor Contract Amount"] + 
                                   inputs["Legal - Misc"] + 
@@ -265,7 +266,7 @@ const SequestrationCalculator = () => {
                                    inputs["E&O"] + inputs["Cyber"] + inputs["Auto"] + inputs["Tail Coverage"] + 
                                    inputs["Contractor Pollution"] + inputs["Site Pollution"] + inputs["Excess Policies"]) + 
                                   (inputs["Internet - Starlink"] + inputs["Portables / Toilet"] + inputs["Fencing"] + 
-                                   inputs["Battery Generator"] + inputs["Telco"] + inputs["Tech & Tools"] + inputs["Trailor"]);
+                                   inputs["Battery Generator"] + inputs["Telco"] + inputs["Tech & Tools"] + inputs["Trailor"]));
     
     // Net Profit calculations
     calc["Net Profit before Land Owner Split"] = calc["Gross Margin"] - calc["Total Overhead Costs"];
@@ -275,12 +276,16 @@ const SequestrationCalculator = () => {
     
     // Project specific calculations
     calc["Total CORCs"] = inputs["Acres"] * inputs["Elevation (ft)"] * inputs["CORCs/acft"];
-    calc["Total Cost"] = (calc["Total CORCs"] && calc["Net Profit"]) ? (calc["Net Profit"] / calc["Total CORCs"]) : 0;
-    calc["Net Profit"] = calc["Total Cost"] - (calc["Total Cost"] * 0.75); // 75% cost assumption
+    calc["Total acft of Elevation"] = inputs["Acres"] * inputs["Elevation (ft)"];
+    calc["Total Truckloads"] = inputs["Truck Loads"] * calc["Total acft of Elevation"];
+    calc["Total Hours of Injection"] = inputs["Hours of Injecion"] * calc["Total acft of Elevation"];
+    calc["Total CORC Sale Price"] = inputs["CORC Sale Price"] * calc["Total CORCs"];
+    calc["Total Cost"] = calc["Total CORC Sale Price"] * 0.75;
+    calc["Net Profit"] = calc["Total CORC Sale Price"] - calc["Total Cost"]; 
     
     // In calculations, add Annual CO2e Sequestration
     calc["Annual CO2e Sequestration"] = calc["Total Hours of Injection"] * calc["CO2e Sequestration Rate Per Hour"];
-    
+    calc["GM%"] = calc["Gross Margin"] / calc["Total Revenue"];
     setOutputs(calc);
   }, [inputs]);
 
@@ -466,6 +471,24 @@ const SequestrationCalculator = () => {
                     </div>
                   </div>
                 ))}
+                {/* Land Owner Split input */}
+                <div key="Land Owner Split">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Land Owner Split</label>
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="1"
+                      value={inputs["Land Owner Split"]}
+                      onChange={e => handleInputChange("Land Owner Split", e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields["Land Owner Split"] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -820,16 +843,32 @@ const SequestrationCalculator = () => {
                   <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total CORCs"] || 0)}</div>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">Total Cost</div>
-                  <div className="text-2xl font-bold text-green-900">{formatCurrency(outputs["Total Cost"] || 0)}</div>
+                  <div className="text-sm font-medium text-green-600">Total acft of Elevation</div>
+                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total acft of Elevation"] || 0)}</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-green-600">Total Truckloads</div>
+                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total Truckloads"] || 0)}</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-green-600">Total Hours of Injection</div>
+                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total Hours of Injection"] || 0)}</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-green-600">Total CORC Sale Price</div>
+                  <div className="text-2xl font-bold text-green-900">{formatCurrency(outputs["Total CORC Sale Price"] || 0)}</div>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-purple-600">Net Profit</div>
-                  <div className="text-2xl font-bold text-purple-900">{formatCurrency(outputs["Net Profit"] || 0)}</div>
+                  <div className="text-sm font-medium text-purple-600">Total Cost</div>
+                  <div className="text-2xl font-bold text-purple-900">{formatCurrency(outputs["Total Cost"] || 0)}</div>
                 </div>
                 <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-orange-600">Profit Margin</div>
-                  <div className="text-2xl font-bold text-orange-900">{formatPercent(outputs["Net Profit"] / outputs["Total Cost"] || 0)}</div>
+                  <div className="text-sm font-medium text-orange-600">Net Profit</div>
+                  <div className="text-2xl font-bold text-orange-900">{formatCurrency(outputs["Net Profit"] || 0)}</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-purple-600">Profit Margin</div>
+                  <div className="text-2xl font-bold text-purple-900">{formatPercent(outputs["Net Profit"] / outputs["Total Cost"] || 0)}</div>
                 </div>
               </div>
             </div>
