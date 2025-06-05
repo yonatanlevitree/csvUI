@@ -8,12 +8,12 @@ const SequestrationCalculator = () => {
     // Sequestration Assumptions
     "Daily Hours of Operation": 8,
     "Total Days of Injection": 175,
-    "Average Carbon Credit Sale Price": 400,
+    "Average Carbon Credit Sale Price/CORC": 400,
     "Wood Chip Moisture Content": 0.40,
     "CORC Verifier Emission Discount Rate": 0.37,
-    "Delivered Wood Consumption Rate per Hour": 11,
-    "Chipper Truckloads Daily per Hour": 2.75,
-    "CO2e Sequestration Rate": 42,
+    "Delivered Wood Consumption Rate per Hour (metric tons)": 11,
+    "Chipper Truckloads Daily per Hour (4 metric tonnes each)": 2.75,
+    "CO2e Sequestration Rate (Metric Tonnes CO2e)": 42,
     "Number of Wells": 125,
     "Well Drilling Cost/Foot": 10,
     "Injection Rigs Per Project": 1,
@@ -29,7 +29,7 @@ const SequestrationCalculator = () => {
     "Pulp Injection Rate (Dry)": 0.6,
     "Organic Carbon Content Wood Chips": 0.48,
     "Organic Carbon Content Pulp": 0.45,
-    "CO2e Sequestration Rate": 14,
+    "CO2e Sequestration Rate (Metric Tonnes CO2e)": 14,
     "CORC Production Rate": 9,
     "Puro Service Fee Rate": 5.78,
     "TSB Methodology Premium Fee": 0.12,
@@ -103,7 +103,7 @@ const SequestrationCalculator = () => {
     "CORCs/acft": 528,
     "CORC Sale Price": 200,
     "Truck Loads": 16,
-    "Hours of Injecion": 10 
+    "Hours of Injecion": 10
   });
 
   const [outputs, setOutputs] = useState({});
@@ -165,20 +165,20 @@ const SequestrationCalculator = () => {
     calc["Pulp Injection Rate (Dry) Annual"] = calc["Pulp Injection Rate (Dry)"] * calc["Total Hours of Injection"];
     
     // CO2 and CORC calculations
-    calc["CO2e Sequestration Rate Per Hour"] = (calc["Wood Chip Injection Rate (Dry)"] * inputs["Organic Carbon Content Wood Chips"] * (44/12)) + 
+    calc["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"] = (calc["Wood Chip Injection Rate (Dry)"] * inputs["Organic Carbon Content Wood Chips"] * (44/12)) + 
                                               (calc["Pulp Injection Rate (Dry)"] * inputs["Organic Carbon Content Pulp"] * (44/12));
-    calc["CO2e Sequestration Rate Annual"] = calc["CO2e Sequestration Rate Per Hour"] * calc["Total Hours of Injection"];
-    calc["CORC Production Rate"] = calc["CO2e Sequestration Rate Per Hour"] * (1 - inputs["CORC Verifier Emission Discount Rate"]);
+    calc["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"] = calc["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"] * calc["Total Hours of Injection"];
+    calc["CORC Production Rate"] = calc["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"] * (1 - inputs["CORC Verifier Emission Discount Rate"]);
     calc["Total CORCs Annual"] = calc["CORC Production Rate"] * calc["Total Hours of Injection"];
     
     // Revenue calculations
-    calc["Carbon Credit Sales"] = calc["Total CORCs Annual"] * inputs["Average Carbon Credit Sale Price"];
+    calc["Carbon Credit Sales"] = calc["Total CORCs Annual"] * inputs["Average Carbon Credit Sale Price/CORC"];
     calc["Tip Fee - related to rent below"] = inputs["Tip Fee - related to rent below"] * calc["Wood Chip Injection Rate (Wet) Annual"];
     
     calc["Total Revenue"] = 5*(calc["Carbon Credit Sales"] + calc["Tip Fee - related to rent below"]);
     
     console.log("Total CORCs Annual:", calc["Total CORCs Annual"]);
-    console.log("Average Carbon Credit Sale Price:", inputs["Average Carbon Credit Sale Price"]);
+    console.log("Average Carbon Credit Sale Price/CORC:", inputs["Average Carbon Credit Sale Price/CORC"]);
     console.log("Carbon Credit Sales:", calc["Carbon Credit Sales"]);
     console.log("Tip Fee - related to rent below:", calc["Tip Fee - related to rent below"]);
     console.log("Total Revenue:", calc["Total Revenue"]);
@@ -298,7 +298,7 @@ const SequestrationCalculator = () => {
     calc["Net Profit"] = calc["Total CORC Sale Price"] - calc["Total Cost"]; 
     
     // In calculations, add Annual CO2e Sequestration
-    calc["Annual CO2e Sequestration"] = calc["Total Hours of Injection"] * calc["CO2e Sequestration Rate Per Hour"];
+    calc["Annual CO2e Sequestration"] = calc["Total Hours of Injection"] * calc["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"];
     calc["GM%"] = calc["Gross Margin"] / calc["Total Revenue"];
     setOutputs(calc);
   }, [inputs]);
@@ -338,8 +338,8 @@ const SequestrationCalculator = () => {
         <div className="p-6 border-b">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
-              <Calculator className="w-8 h-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Sequestration PROFORMA</h1>
+            <Calculator className="w-8 h-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-gray-900">Sequestration PROFORMA</h1>
             </div>
             <img src={logo} alt="Levitree Logo" className="h-20" />
           </div>
@@ -377,16 +377,16 @@ const SequestrationCalculator = () => {
           <div className="bg-white rounded-lg shadow p-6 mb-2">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Zap className="w-5 h-5 text-green-600" />
-                Sequestration Assumptions
-              </h2>
+              <Zap className="w-5 h-5 text-green-600" />
+              Sequestration Assumptions
+            </h2>
               <button onClick={() => toggleCard('sequestration')} className="p-1 rounded hover:bg-gray-100">
                 {openCards.sequestration ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.sequestration ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
-                {["Daily Hours of Operation","Total Days of Injection","Average Carbon Credit Sale Price","Wood Chip Moisture Content"].map((field) => (
+            <div className="grid grid-cols-2 gap-4">
+                {["Daily Hours of Operation","Total Days of Injection","Wood Chip Moisture Content","Delivered Wood Consumption Rate per Hour (metric tons)","Chipper Truckloads Daily per Hour (4 metric tonnes each)","CO2e Sequestration Rate (Metric Tonnes CO2e)","Injection Rigs Per Project","Model Start Date","Injection Start Date"].map((field) => (
                   <div key={field}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
@@ -402,33 +402,61 @@ const SequestrationCalculator = () => {
                     </div>
                   </div>
                 ))}
-                <div key="CORC Verifier Emission Discount Rate">
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    CORC Verifier Emission Discount Rate
-                    <span className="ml-2 text-blue-500 cursor-help relative group">
-                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-black text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-0 w-48">avg 55%; can be in future 10% maybe</span>
-                      ℹ️
-                    </span>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Wood Chip Moisture Content
+                    <span className="ml-2 text-blue-500 cursor-pointer" title="can be as low as 10%.">ℹ️</span>
                   </label>
                   <div className="relative w-full">
                     <input
                       type="number"
-                      value={inputs["CORC Verifier Emission Discount Rate"]}
-                      onChange={(e) => handleInputChange("CORC Verifier Emission Discount Rate", e.target.value)}
+                      value={inputs["Wood Chip Moisture Content"]}
+                      onChange={(e) => handleInputChange("Wood Chip Moisture Content", e.target.value)}
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {!modifiedFields["CORC Verifier Emission Discount Rate"] && (
+                    {!modifiedFields["Wood Chip Moisture Content"] && (
                       <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                     )}
                   </div>
                 </div>
-                <div key="Number of Wells">
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Delivered Wood Consumption Rate per Hour (metric tons)
+                    <span className="ml-2 text-blue-500 cursor-pointer" title="Truck brings 20 yards">ℹ️</span>
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs["Delivered Wood Consumption Rate per Hour (metric tons)"]}
+                      onChange={(e) => handleInputChange("Delivered Wood Consumption Rate per Hour (metric tons)", e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields["Delivered Wood Consumption Rate per Hour (metric tons)"] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Chipper Truckloads Daily per Hour (4 metric tonnes each)
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs["Chipper Truckloads Daily per Hour (4 metric tonnes each)"]}
+                      onChange={(e) => handleInputChange("Chipper Truckloads Daily per Hour (4 metric tonnes each)", e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields["Chipper Truckloads Daily per Hour (4 metric tonnes each)"] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-black-700 mb-1">
                     Number of Wells
-                    <span className="ml-2 text-blue-500 cursor-help relative group">
-                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-black text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-0 w-48">1-2 people per well; 1 hr per well</span>
-                      ℹ️
-                    </span>
+                    <span className="ml-2 text-black-500 cursor-pointer" title="1-2 people per well; 1 hr per well. 4 injection wells per acre foot per year; non -cased no permit needed; use levitree rig">ℹ️</span>
                   </label>
                   <div className="relative w-full">
                     <input
@@ -438,6 +466,23 @@ const SequestrationCalculator = () => {
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {!modifiedFields["Number of Wells"] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black-700 mb-1">
+                    CORC Verifier Emission Discount Rate
+                    <span className="ml-2 text-blue-500 cursor-pointer" title="Avg 55%; can be in future 10% maybe">ℹ️</span>
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs["CORC Verifier Emission Discount Rate"]}
+                      onChange={(e) => handleInputChange("CORC Verifier Emission Discount Rate", e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields["CORC Verifier Emission Discount Rate"] && (
                       <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                     )}
                   </div>
@@ -455,31 +500,31 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.assumptions ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
-                {["Number of Projects","Total Hours of Injection","Wood Chip Injection Rate (Wet)","Wood Chip Injection Rate (Dry)","Pulp Injection Rate (Dry)","Organic Carbon Content Wood Chips","Organic Carbon Content Pulp","TSB Methodology Premium Fee","CO2e Sequestration Rate","CORC Production Rate","Puro Service Fee Rate"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+            <div className="grid grid-cols-2 gap-4">
+                {["Number of Projects","Total Hours of Injection","Wood Chip Injection Rate (Wet)","Wood Chip Injection Rate (Dry)","Pulp Injection Rate (Dry)","Organic Carbon Content Wood Chips","Organic Carbon Content Pulp","TSB Methodology Premium Fee","CO2e Sequestration Rate (Metric Tonnes CO2e)","CORC Production Rate","Puro Service Fee Rate"].map((field) => (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Puro Service Fee Discounted?</label>
-                  <input
-                    type="checkbox"
-                    checked={inputs["Puro Service Fee Discounted?"]}
-                    onChange={(e) => setInputs(prev => ({ ...prev, "Puro Service Fee Discounted?": e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
+                </div>
+              ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Puro Service Fee Discounted?</label>
+                <input
+                  type="checkbox"
+                  checked={inputs["Puro Service Fee Discounted?"]}
+                  onChange={(e) => setInputs(prev => ({ ...prev, "Puro Service Fee Discounted?": e.target.checked }))}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
                 </div>
               </div>
             </div>
@@ -494,23 +539,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.revenue ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {["Carbon Credit Sales","Tip Fee - related to rent below"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
               </div>
             </div>
           </div>
@@ -524,23 +569,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.preconstruction ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {["Land Lease Cost","Engineering & Design","Permitting & Approvals","Legal","Site Work / Materials Yard - Pre-Construction"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
                 {/* Land Owner Split input */}
                 <div key="Land Owner Split">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Land Owner Split</label>
@@ -572,23 +617,40 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.injection ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
-                {["Setup Cost","Water Tank Rental","Matts & Hoses","Other Slurry Ingredients Delivered","Fuel & Energy","Levitree Equipment Maintaince","Equipment Transportaion/Setup"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+            <div className="grid grid-cols-2 gap-4">
+                {["Setup Cost","Matts & Hoses","Other Slurry Ingredients Delivered","Fuel & Energy","Levitree Equipment Maintaince","Equipment Transportaion/Setup"].map((field) => (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Water Tank Rental
+                  <span className="ml-2 text-blue-500 cursor-pointer" title="Water Tanks: $49/day - each tank 18k gallons; need 5 per 10k tons sequestered">ℹ️</span>
+                </label>
+                <div className="relative w-full">
+                  <input
+                    type="number"
+                    value={inputs["Water Tank Rental"]}
+                    onChange={(e) => handleInputChange("Water Tank Rental", e.target.value)}
+                    className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {!modifiedFields["Water Tank Rental"] && (
+                    <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                  )}
+                </div>
+              </div>
               </div>
             </div>
           </div>
@@ -602,23 +664,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.verification ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {["Levitree Liscense Fee","Carbon Direct","Patch - Exchange","Puro Annual Fee"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
               </div>
             </div>
           </div>
@@ -632,23 +694,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.consultants ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {["Developer Fee","Accounting & Tax - Baker Tilly","Jerry Gutierrez Labor Contract","Legal - Misc"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
               </div>
             </div>
           </div>
@@ -662,23 +724,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.insurance ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {["General Liability","Property","Equipment","E&O","Cyber","Auto","Tail Coverage","Contractor Pollution","Site Pollution","Excess Policies"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
               </div>
             </div>
           </div>
@@ -692,23 +754,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.general ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {["Internet - Starlink","Portables / Toilet","Fencing","Battery Generator","Telco","Tech & Tools","Trailor"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
               </div>
             </div>
           </div>
@@ -722,23 +784,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.carboncredit ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
-                {[1, 2, 3, 4, 5].map((year) => (
-                  <div key={year}>
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4, 5].map((year) => (
+                <div key={year}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Carbon Credit Commission year {year}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[`Carbon Credit Commission year ${year}`]}
-                        onChange={(e) => handleInputChange(`Carbon Credit Commission year ${year}`, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[`Carbon Credit Commission year ${year}`]}
+                    onChange={(e) => handleInputChange(`Carbon Credit Commission year ${year}`, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[`Carbon Credit Commission year ${year}`] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
                 {/* Long Tonne (lbs/metric ton) input */}
                 <div key="Long Tonne (lbs/metric ton)">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Long Tonne (lbs/metric ton)</label>
@@ -767,23 +829,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.projectparams ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {["Elevation (ft)","Acres","CORCs/acft","CORC Sale Price","Truck Loads","Hours of Injecion"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
-                      <input
-                        type="number"
-                        value={inputs[field]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
+                  <input
+                    type="number"
+                    value={inputs[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                  />
                       {!modifiedFields[field] && (
                         <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
                       )}
                     </div>
-                  </div>
-                ))}
+                </div>
+              ))}
               </div>
             </div>
           </div>
@@ -795,31 +857,31 @@ const SequestrationCalculator = () => {
           <div className="bg-white rounded-lg shadow p-6 mb-2">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                Production Metrics
-              </h2>
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              Production Metrics
+            </h2>
               <button onClick={() => toggleCard('production')} className="p-1 rounded hover:bg-gray-100">
                 {openCards.production ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.production ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-blue-600">Total Hours of Injection</div>
-                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total Hours of Injection"] || 0)}</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Wet)</div>
-                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet)"] || 0)} T/hr</div>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-purple-600">Wood Chip Injection Rate (Dry)</div>
-                    <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry)"] || 0)} T/hr</div>
-                  </div>
-                  <div className="bg-orange-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-orange-600">Pulp Injection Rate (Dry)</div>
-                    <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Pulp Injection Rate (Dry)"] || 0)} T/hr</div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-blue-600">Total Hours of Injection</div>
+                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total Hours of Injection"] || 0)}</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Wet)</div>
+                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet)"] || 0)} T/hr</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-purple-600">Wood Chip Injection Rate (Dry)</div>
+                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry)"] || 0)} T/hr</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-orange-600">Pulp Injection Rate (Dry)</div>
+                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Pulp Injection Rate (Dry)"] || 0)} T/hr</div>
                   </div>
                 </div>
               </div>
@@ -835,23 +897,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.annual ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-blue-600">Wood Chip Injection Rate (Wet) Annual</div>
-                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] || 0)} T</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Dry) Annual</div>
-                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry) Annual"] || 0)} T</div>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-purple-600">Pulp Injection Rate (Dry) Annual</div>
-                    <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Pulp Injection Rate (Dry) Annual"] || 0)} T</div>
-                  </div>
-                  <div className="bg-orange-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-orange-600">CO2e Sequestration Rate Annual</div>
-                    <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["CO2e Sequestration Rate Annual"] || 0)} T</div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-blue-600">Wood Chip Injection Rate (Wet) Annual</div>
+                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] || 0)} T</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Dry) Annual</div>
+                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry) Annual"] || 0)} T</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-purple-600">Pulp Injection Rate (Dry) Annual</div>
+                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Pulp Injection Rate (Dry) Annual"] || 0)} T</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-orange-600">CO2e Sequestration Rate (Metric Tonnes CO2e) Annual</div>
+                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"] || 0)} T</div>
                   </div>
                 </div>
               </div>
@@ -867,23 +929,23 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.corcprod ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-blue-600">CO2e Sequestration Rate Per Hour</div>
-                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["CO2e Sequestration Rate Per Hour"] || 0)} T/hr</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-green-600">CORC Production Rate</div>
-                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["CORC Production Rate"] || 0)} CORCs/hr</div>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-purple-600">Total CORCs Annual</div>
-                    <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Total CORCs Annual"] || 0)} CORCs</div>
-                  </div>
-                  <div className="bg-orange-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-orange-600">Annual CO2e Sequestration</div>
-                    <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Annual CO2e Sequestration"] || 0)} T</div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-blue-600">CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour</div>
+                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"] || 0)} T/hr</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-green-600">CORC Production Rate</div>
+                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["CORC Production Rate"] || 0)} CORCs/hr</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-purple-600">Total CORCs Annual</div>
+                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Total CORCs Annual"] || 0)} CORCs</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-orange-600">Annual CO2e Sequestration</div>
+                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Annual CO2e Sequestration"] || 0)} T</div>
                   </div>
                 </div>
               </div>
@@ -936,53 +998,53 @@ const SequestrationCalculator = () => {
           <div className="bg-white rounded-lg shadow p-6 mb-2">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-green-600" />
-                Revenue & Costs
-              </h2>
+              <DollarSign className="w-5 h-5 text-green-600" />
+              Revenue & Costs
+            </h2>
               <button onClick={() => toggleCard('revcosts')} className="p-1 rounded hover:bg-gray-100">
                 {openCards.revcosts ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.revcosts ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="font-medium">Carbon Credit Sales</span>
-                  <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Carbon Credit Sales"] || 0)}</span>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="font-medium">Carbon Credit Sales</span>
+                <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Carbon Credit Sales"] || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="font-medium">Tip Fee Revenue</span>
+                <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Tip Fee - related to rent below"] || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="font-medium">Total Revenue</span>
+                <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Total Revenue"] || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="font-medium">Total Variable Costs</span>
+                <span className="text-lg font-bold text-red-600">{formatCurrency(outputs["Total Variable Costs"] || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b bg-blue-50 px-3 rounded">
+                <span className="font-medium">Gross Margin</span>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-blue-600">{formatCurrency(outputs["Gross Margin"] || 0)}</div>
+                  <div className="text-sm text-blue-500">GM%: {formatPercent(outputs["GM%"] || 0)}</div>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="font-medium">Tip Fee Revenue</span>
-                  <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Tip Fee - related to rent below"] || 0)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="font-medium">Total Revenue</span>
-                  <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Total Revenue"] || 0)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="font-medium">Total Variable Costs</span>
-                  <span className="text-lg font-bold text-red-600">{formatCurrency(outputs["Total Variable Costs"] || 0)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b bg-blue-50 px-3 rounded">
-                  <span className="font-medium">Gross Margin</span>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-blue-600">{formatCurrency(outputs["Gross Margin"] || 0)}</div>
-                    <div className="text-sm text-blue-500">GM%: {formatPercent(outputs["GM%"] || 0)}</div>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="font-medium">Total Overhead Costs</span>
-                  <span className="text-lg font-bold text-red-600">{formatCurrency(outputs["Total Overhead Costs"] || 0)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b bg-green-50 px-3 rounded">
-                  <span className="font-medium">Net Profit before Land Owner Split</span>
-                  <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Net Profit before Land Owner Split"] || 0)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="font-medium">Land Owner Split Amount</span>
-                  <span className="text-lg font-bold text-orange-600">{formatCurrency(outputs["Land Owner Split Amount"] || 0)}</span>
-                </div>
-                <div className="flex justify-between items-center py-3 bg-gray-100 px-3 rounded font-bold">
-                  <span className="text-lg">Net Profit to SPE / Taxable Income</span>
-                  <span className="text-xl text-gray-900">{formatCurrency(outputs["Net Profit to SPE / Taxable Income"] || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="font-medium">Total Overhead Costs</span>
+                <span className="text-lg font-bold text-red-600">{formatCurrency(outputs["Total Overhead Costs"] || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b bg-green-50 px-3 rounded">
+                <span className="font-medium">Net Profit before Land Owner Split</span>
+                <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Net Profit before Land Owner Split"] || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="font-medium">Land Owner Split Amount</span>
+                <span className="text-lg font-bold text-orange-600">{formatCurrency(outputs["Land Owner Split Amount"] || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 bg-gray-100 px-3 rounded font-bold">
+                <span className="text-lg">Net Profit to SPE / Taxable Income</span>
+                <span className="text-xl text-gray-900">{formatCurrency(outputs["Net Profit to SPE / Taxable Income"] || 0)}</span>
                 </div>
               </div>
             </div>
@@ -997,13 +1059,13 @@ const SequestrationCalculator = () => {
               </button>
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.summary ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-blue-600">Total CORCs</div>
-                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total CORCs"] || 0)}</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-blue-600">Total CORCs</div>
+                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total CORCs"] || 0)}</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
                     <div className="text-sm font-medium text-green-600">Total acft of Elevation</div>
                     <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total acft of Elevation"] || 0)}</div>
                   </div>
@@ -1018,15 +1080,15 @@ const SequestrationCalculator = () => {
                   <div className="bg-green-50 p-4 rounded-lg">
                     <div className="text-sm font-medium text-green-600">Total CORC Sale Price</div>
                     <div className="text-2xl font-bold text-green-900">{formatCurrency(outputs["Total CORC Sale Price"] || 0)}</div>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
                     <div className="text-sm font-medium text-purple-600">Total Cost</div>
                     <div className="text-2xl font-bold text-purple-900">{formatCurrency(outputs["Total Cost"] || 0)}</div>
-                  </div>
-                  <div className="bg-orange-50 p-4 rounded-lg">
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
                     <div className="text-sm font-medium text-orange-600">Net Profit</div>
                     <div className="text-2xl font-bold text-orange-900">{formatCurrency(outputs["Net Profit"] || 0)}</div>
-                  </div>
+                </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
                     <div className="text-sm font-medium text-purple-600">Profit Margin</div>
                     <div className="text-2xl font-bold text-purple-900">{formatPercent(outputs["Net Profit"] / outputs["Total Cost"] || 0)}</div>
