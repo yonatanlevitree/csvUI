@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, TrendingUp, DollarSign, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calculator, TrendingUp, DollarSign, Zap, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import logo from './logo_full copy.png';
 
 const SequestrationCalculator = () => {
@@ -332,16 +332,470 @@ const SequestrationCalculator = () => {
     return new Intl.NumberFormat('en-US').format(Math.round(value));
   };
 
+  const handleDownloadCSV = () => {
+    // Create CSV content
+    const csvRows = [];
+    
+    // Add header
+    csvRows.push('INPUT VALUES,,,,,,,,OUTPUT VALUES,,,,,,,');
+    csvRows.push('Section,Field,Value,Unit,Description,Formula,,,,Field,Value,Unit,Formula,,,,,');
+    
+    // Add Sequestration Assumptions section
+    csvRows.push('# Sequestration Assumptions,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Daily Hours') || key.startsWith('Total Days') || 
+          key.startsWith('Average Carbon') || key.startsWith('Wood Chip') || 
+          key.startsWith('CORC') || key.startsWith('Delivered Wood') || 
+          key.startsWith('Chipper') || key.startsWith('CO2e') || 
+          key.startsWith('Number of Wells') || key.startsWith('Well Drilling') || 
+          key.startsWith('Injection Rigs') || key.startsWith('Equipment Lease') || 
+          key.startsWith('Model Start') || key.startsWith('Injection Start')) {
+        // Find corresponding output if it exists
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Assumptions section
+    csvRows.push('# Assumptions,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Number of Projects') || key.startsWith('Total Hours') || 
+          key.startsWith('Wood Chip') || key.startsWith('Pulp') || 
+          key.startsWith('Organic Carbon') || key.startsWith('TSB') || 
+          key.startsWith('Puro')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Revenue section
+    csvRows.push('# Revenue,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Carbon Credit') || key.startsWith('Tip Fee')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Pre-Construction Costs section
+    csvRows.push('# Pre-Construction Costs,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Land Lease') || key.startsWith('Engineering') || 
+          key.startsWith('Permitting') || key.startsWith('Legal') || 
+          key.startsWith('Site Work') || key.startsWith('Land Owner')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Injection Costs section
+    csvRows.push('# Injection Costs,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Setup Cost') || key.startsWith('Water Tank') || 
+          key.startsWith('Matts & Hoses') || key.startsWith('Other Slurry') || 
+          key.startsWith('Fuel & Energy') || key.startsWith('Levitree Equipment') || 
+          key.startsWith('Equipment Transportation')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Verification/Sales Costs section
+    csvRows.push('# Verification/Sales Costs,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Levitree License') || key.startsWith('Carbon Direct') || 
+          key.startsWith('Patch - Exchange') || key.startsWith('Puro Annual')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Consultants section
+    csvRows.push('# Consultants,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Developer Fee') || key.startsWith('Accounting & Tax') || 
+          key.startsWith('Jerry Gutierrez') || key.startsWith('Legal - Misc')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Insurance section
+    csvRows.push('# Insurance,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('General Liability') || key.startsWith('Property') || 
+          key.startsWith('Equipment') || key.startsWith('E&O') || 
+          key.startsWith('Cyber') || key.startsWith('Auto') || 
+          key.startsWith('Tail Coverage') || key.startsWith('Contractor Pollution') || 
+          key.startsWith('Site Pollution') || key.startsWith('Excess Policies')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add General Conditions section
+    csvRows.push('# General Conditions,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Internet - Starlink') || key.startsWith('Portables') || 
+          key.startsWith('Fencing') || key.startsWith('Battery Generator') || 
+          key.startsWith('Telco') || key.startsWith('Tech & Tools') || 
+          key.startsWith('Trailor')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Other P&L Assumptions section
+    csvRows.push('# Other P&L Assumptions,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Carbon Credit Commission') || key.startsWith('Long Tonne')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Project Parameters section
+    csvRows.push('# Project Parameters,,,,,,,,,,,,,,,,,,');
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (key.startsWith('Elevation') || key.startsWith('Acres') || 
+          key.startsWith('CORCs/acft') || key.startsWith('CORC Sale Price') || 
+          key.startsWith('Truck Loads') || key.startsWith('Hours of Injection')) {
+        const outputKey = Object.keys(outputs).find(k => k.includes(key));
+        const outputValue = outputKey ? outputs[outputKey] : '';
+        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
+        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
+        
+        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      }
+    });
+
+    // Add Project Summary section with all outputs
+    csvRows.push('# Project Summary,,,,,,,,,,,,,,,,,,');
+    Object.entries(outputs).forEach(([key, value]) => {
+      const unit = getUnitForOutput(key);
+      const formula = getFormulaForOutput(key);
+      csvRows.push(`,,,,,,,,,,${key},${value},${unit},${formula},,,,`);
+    });
+
+    // Create and download the file
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'attempt3.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Helper function to get units for output values
+  const getUnitForOutput = (key) => {
+    const unitMap = {
+      'Total Hours of Injection': 'hours',
+      'Total Hours All Years': 'hours',
+      'Wood Chip Injection Rate (Wet)': 'Tonnes/hr',
+      'Wood Chip Injection Rate (Dry)': 'Tonnes/hr',
+      'Pulp Injection Rate (Dry)': 'Tonnes/hr',
+      'Wood Chip Injection Rate (Wet) Annual': 'Tonnes',
+      'Wood Chip Injection Rate (Dry) Annual': 'Tonnes',
+      'Pulp Injection Rate (Dry) Annual': 'Tonnes',
+      'CO2e Sequestration Rate Per Hour': 'Tonnes CO2e/hr',
+      'CO2e Sequestration Rate Annual': 'Tonnes CO2e',
+      'CORC Production Rate': 'CORCs/hr',
+      'Total CORCs Annual': 'CORCs',
+      'Carbon Credit Sales': 'USD',
+      'Tip Fee Revenue': 'USD',
+      'Total Revenue': 'USD',
+      'Levitree License Fee Amount': 'USD',
+      'Carbon Direct Amount': 'USD',
+      'Patch - Exchange Amount': 'USD',
+      'Puro Service Fee Amount': 'USD',
+      'Other Slurry Ingredients Amount': 'USD',
+      'Fuel & Energy Amount': 'USD',
+      'Jerry Gutierrez Labor Amount': 'USD',
+      'Developer Fee Amount': 'USD',
+      'Well Drilling Amount': 'USD',
+      'Wood Biomass Processed Amount': 'USD',
+      'Total Variable Costs': 'USD',
+      'Gross Margin': 'USD',
+      'GM%': '%',
+      'Total Overhead Costs': 'USD',
+      'Net Profit before Land Owner Split': 'USD',
+      'Land Owner Split Amount': 'USD',
+      'Total Profit Share Distribution': 'USD',
+      'Net Profit to SPE': 'USD',
+      'Total CORCs': 'CORCs',
+      'Total acft of Elevation': 'acft',
+      'Total Truckloads': 'loads',
+      'Total Hours of Injection': 'hours',
+      'Total CORC Sale Price': 'USD',
+      'Total Cost': 'USD',
+      'Net Profit': 'USD',
+      'Profit Margin': '%',
+      'Annual CO2e Sequestration': 'Tonnes'
+    };
+    return unitMap[key] || '';
+  };
+
+  // Helper function to get formulas for output values
+  const getFormulaForOutput = (key) => {
+    const formulaMap = {
+      'Total Hours of Injection': '=C4*C5',
+      'Total Hours All Years': '=N4*5',
+      'Wood Chip Injection Rate (Wet)': '=N8/C5',
+      'Wood Chip Injection Rate (Dry)': '=N7/(1+C6)',
+      'Pulp Injection Rate (Dry)': '=N7*0.71*0.1',
+      'Wood Chip Injection Rate (Wet) Annual': '=N7*N4',
+      'Wood Chip Injection Rate (Dry) Annual': '=N8*N4',
+      'Pulp Injection Rate (Dry) Annual': '=N9*N4',
+      'CO2e Sequestration Rate Per Hour': '=(N8*C19*44/12)+(N9*C20*44/12)',
+      'CO2e Sequestration Rate Annual': '=N10*N4',
+      'CORC Production Rate': '=N10*(1-C7)',
+      'Total CORCs Annual': '=N11*N4',
+      'Carbon Credit Sales': '=N12*C3',
+      'Tip Fee Revenue': '=C28*N8',
+      'Total Revenue': '=5*(N13+N14)',
+      'Levitree License Fee Amount': '=N13*C37',
+      'Carbon Direct Amount': '=N13*C38',
+      'Patch - Exchange Amount': '=N13*C39',
+      'Puro Service Fee Amount': '=N12*C21*(1+C20)',
+      'Other Slurry Ingredients Amount': '=C45*N8*0.096',
+      'Fuel & Energy Amount': '=C46*N4',
+      'Jerry Gutierrez Labor Amount': '=C52*N4',
+      'Developer Fee Amount': '=N13*C51',
+      'Well Drilling Amount': '=C9*25*C10',
+      'Wood Biomass Processed Amount': '=(N8/26)*1000',
+      'Total Variable Costs': '=SUM(N17:N26)',
+      'Gross Margin': '=N15-N27',
+      'GM%': '=N28/N15',
+      'Total Overhead Costs': '=5*(N25+C52*5+N24+C53*5+SUM(C55:C64)+SUM(C66:C72))',
+      'Net Profit before Land Owner Split': '=N28-N30',
+      'Land Owner Split Amount': '=N31*C35',
+      'Total Profit Share Distribution': '=N32',
+      'Net Profit to SPE': '=N31-N32',
+      'Total CORCs': '=C76*C75*C77',
+      'Total acft of Elevation': '=C76*C75',
+      'Total Truckloads': '=C79*N36',
+      'Total Hours of Injection': '=C80*N36',
+      'Total CORC Sale Price': '=C78*N35',
+      'Total Cost': '=N38*0.75',
+      'Net Profit': '=N38-N39',
+      'Profit Margin': '=N40/N39',
+      'Annual CO2e Sequestration': '=N37*N10'
+    };
+
+    // Helper function to get the cell reference for an input value
+    const getInputCellRef = (inputKey) => {
+      const inputRowMap = {
+        'Daily Hours of Operation': 4,
+        'Total Days of Injection': 5,
+        'Average Carbon Credit Sale Price/CORC': 3,
+        'Wood Chip Moisture Content': 6,
+        'CORC Verifier Emission Discount Rate': 7,
+        'Delivered Wood Consumption Rate per Hour': 19,
+        'Chipper Truckloads Daily per Hour': 20,
+        'CO2e Sequestration Rate': 21,
+        'Number of Wells': 9,
+        'Well Drilling Cost/Foot': 10,
+        'Injection Rigs Per Project': 11,
+        'Equipment Lease Amount': 12,
+        'Model Start Date': 13,
+        'Injection Start Date': 14,
+        'Number of Projects': 15,
+        'Total Hours of Injection': 4,
+        'Wood Chip Injection Rate (Wet)': 7,
+        'Wood Chip Injection Rate (Dry)': 8,
+        'Pulp Injection Rate (Dry)': 9,
+        'Organic Carbon Content Wood Chips': 19,
+        'Organic Carbon Content Pulp': 20,
+        'TSB Methodology Premium Fee': 21,
+        'Puro Service Fee Rate': 21,
+        'Puro Service Fee Discounted?': 22,
+        'Carbon Credit Sales': 3,
+        'Tip Fee': 28,
+        'Land Lease Cost': 33,
+        'Engineering & Design': 34,
+        'Permitting & Approvals': 35,
+        'Legal': 36,
+        'Site Work / Materials Yard': 37,
+        'Land Owner Split': 35,
+        'Setup Cost': 41,
+        'Water Tank Rental': 42,
+        'Matts & Hoses': 43,
+        'Other Slurry Ingredients Delivered': 45,
+        'Fuel & Energy': 46,
+        'Levitree Equipment Maintenance': 47,
+        'Equipment Transportation/Setup': 48,
+        'Levitree License Fee': 37,
+        'Carbon Direct': 38,
+        'Patch - Exchange': 39,
+        'Puro Annual Fee': 40,
+        'Developer Fee': 51,
+        'Accounting & Tax - Baker Tilly': 52,
+        'Jerry Gutierrez Labor Contract': 52,
+        'Legal - Misc': 53,
+        'General Liability': 55,
+        'Property': 56,
+        'Equipment': 57,
+        'E&O': 58,
+        'Cyber': 59,
+        'Auto': 60,
+        'Tail Coverage': 61,
+        'Contractor Pollution': 62,
+        'Site Pollution': 63,
+        'Excess Policies': 64,
+        'Internet - Starlink': 66,
+        'Portables / Toilet': 67,
+        'Fencing': 68,
+        'Battery Generator': 69,
+        'Telco': 70,
+        'Tech & Tools': 71,
+        'Trailor': 72,
+        'Carbon Credit Commission year 1': 74,
+        'Carbon Credit Commission year 2': 75,
+        'Carbon Credit Commission year 3': 76,
+        'Carbon Credit Commission year 4': 77,
+        'Carbon Credit Commission year 5': 78,
+        'Long Tonne (lbs/metric ton)': 79,
+        'Elevation (ft)': 76,
+        'Acres': 75,
+        'CORCs/acft': 77,
+        'CORC Sale Price': 35,
+        'Truck Loads': 79,
+        'Hours of Injection': 80
+      };
+      return `C${inputRowMap[inputKey]}`;
+    };
+
+    // Helper function to get the cell reference for an output value
+    const getOutputCellRef = (outputKey) => {
+      const outputRowMap = {
+        'Total Hours of Injection': 4,
+        'Total Hours All Years': 4,
+        'Wood Chip Injection Rate (Wet)': 7,
+        'Wood Chip Injection Rate (Dry)': 8,
+        'Pulp Injection Rate (Dry)': 9,
+        'Wood Chip Injection Rate (Wet) Annual': 7,
+        'Wood Chip Injection Rate (Dry) Annual': 8,
+        'Pulp Injection Rate (Dry) Annual': 9,
+        'CO2e Sequestration Rate Per Hour': 10,
+        'CO2e Sequestration Rate Annual': 10,
+        'CORC Production Rate': 11,
+        'Total CORCs Annual': 12,
+        'Carbon Credit Sales': 13,
+        'Tip Fee Revenue': 14,
+        'Total Revenue': 15,
+        'Levitree License Fee Amount': 17,
+        'Carbon Direct Amount': 17,
+        'Patch - Exchange Amount': 17,
+        'Puro Service Fee Amount': 17,
+        'Other Slurry Ingredients Amount': 17,
+        'Fuel & Energy Amount': 17,
+        'Jerry Gutierrez Labor Amount': 17,
+        'Developer Fee Amount': 17,
+        'Well Drilling Amount': 17,
+        'Wood Biomass Processed Amount': 17,
+        'Total Variable Costs': 27,
+        'Gross Margin': 28,
+        'GM%': 28,
+        'Total Overhead Costs': 30,
+        'Net Profit before Land Owner Split': 31,
+        'Land Owner Split Amount': 32,
+        'Total Profit Share Distribution': 32,
+        'Net Profit to SPE': 33,
+        'Total CORCs': 34,
+        'Total acft of Elevation': 34,
+        'Total Truckloads': 34,
+        'Total Hours of Injection': 34,
+        'Total CORC Sale Price': 38,
+        'Total Cost': 39,
+        'Net Profit': 40,
+        'Profit Margin': 40,
+        'Annual CO2e Sequestration': 41
+      };
+      return `N${outputRowMap[outputKey]}`;
+    };
+
+    // Replace input references in formulas with actual cell references
+    let formula = formulaMap[key];
+    if (formula) {
+      // Replace C references with actual cell references
+      formula = formula.replace(/C(\d+)/g, (match, row) => {
+        const inputKey = Object.keys(inputs).find(k => getInputCellRef(k) === `C${row}`);
+        return inputKey ? getInputCellRef(inputKey) : match;
+      });
+
+      // Replace N references with actual cell references
+      formula = formula.replace(/N(\d+)/g, (match, row) => {
+        const outputKey = Object.keys(outputs).find(k => getOutputCellRef(k) === `N${row}`);
+        return outputKey ? getOutputCellRef(outputKey) : match;
+      });
+    }
+
+    return formula || '';
+  };
+
   return (
     <div className="max-w-[2000px] mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg mb-6">
         <div className="p-6 border-b">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
-            <Calculator className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Sequestration PROFORMA</h1>
+              <Calculator className="w-8 h-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Sequestration PROFORMA</h1>
             </div>
-            <img src={logo} alt="Levitree Logo" className="h-20" />
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleDownloadCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                <Download className="w-5 h-5" />
+                Export to CSV
+              </button>
+              <img src={logo} alt="Levitree Logo" className="h-20" />
+            </div>
           </div>
           <p className="text-gray-600">Based on number of hours injection the site can facilitate</p>
         </div>
