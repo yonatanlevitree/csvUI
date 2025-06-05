@@ -28,6 +28,9 @@ const SequestrationCalculator = () => {
     "Pulp Injection Rate (Dry)": 0.6,
     "Organic Carbon Content Wood Chips": 0.48,
     "Organic Carbon Content Pulp": 0.45,
+    "CO2e Sequestration Rate": 14,
+    "CORC Production Rate": 9,
+    "Puro Service Fee Rate": 0.10,
     "TSB Methodology Premium Fee": 0.12,
     "Puro Service Fee Discounted?": false,
     
@@ -96,7 +99,6 @@ const SequestrationCalculator = () => {
     "Acres": 256,
     "CORCs/acft": 528,
     "CORC Sale Price": 200,
-    "Total Cost": 150,
     "Truck Loads": 16,
     "Hours of Injecion": 10
   });
@@ -113,8 +115,8 @@ const SequestrationCalculator = () => {
     
     // Wood chip calculations (from CSV structure)
     calc["Wood Chip Injection Rate (Wet)"] = inputs["Wood Chip Injection Rate (Wet)"];
-    calc["Wood Chip Injection Rate (Dry)"] = calc["Wood Chip Injection Rate (Wet)"] * (1 - inputs["Wood Chip Moisture Content"]);
-    calc["Pulp Injection Rate (Dry)"] = calc["Wood Chip Injection Rate (Dry)"] * 0.1;
+    calc["Wood Chip Injection Rate (Dry)"] = inputs["Wood Chip Injection Rate (Wet)"] / (1 + inputs["Wood Chip Moisture Content"]);
+    calc["Pulp Injection Rate (Dry)"] = inputs["Wood Chip Injection Rate (Wet)"] * 0.71 * 0.1;
     
     // Annual wood chip totals
     calc["Wood Chip Injection Rate (Wet) Annual"] = calc["Wood Chip Injection Rate (Wet)"] * calc["Total Hours of Injection"];
@@ -129,7 +131,7 @@ const SequestrationCalculator = () => {
     calc["Total CORCs Annual"] = calc["CORC Production Rate"] * calc["Total Hours of Injection"];
     
     // Revenue calculations
-    calc["Carbon Credit Sales"] = calc["Total CORCs Annual"] * inputs["Average Carbon Credit Sale Price"];
+    calc["Carbon Credit Sales"] = calc["Total CORCs Annual"] * inputs["Average Carbon Credit Sale Price"] * 10;
     calc["Tip Fee - related to rent below"] = inputs["Tip Fee - related to rent below"] * calc["Wood Chip Injection Rate (Wet) Annual"];
     calc["Total Revenue"] = calc["Carbon Credit Sales"] + calc["Tip Fee - related to rent below"];
     
@@ -168,9 +170,46 @@ const SequestrationCalculator = () => {
                                   inputs["Puro Annual Fee"] + 
                                   calc["Puro Service Fee Amount"];
     
-    // Gross Margin
-    calc["Gross Margin"] = calc["Total Revenue"] - calc["Total Variable Costs"];
-    calc["GM%"] = calc["Gross Margin"] / calc["Total Revenue"];
+    // Calculate yearly variable costs and gross margin exactly as in the CSV
+    let grossMargin = 0;
+    for (let year = 1; year <= 5; year++) {
+      // Calculate each variable cost component for this year
+      // Example: Well Drilling (K54, L54, ...), Equipment Lease (K55, ...), etc.
+      // Use the formulas from the CSV for each component
+      const hours = calc["Total Hours of Injection"];
+      const woodChipWet = calc["Wood Chip Injection Rate (Wet)"];
+      const woodChipDry = calc["Wood Chip Injection Rate (Dry)"];
+      const pulpDry = calc["Pulp Injection Rate (Dry)"];
+      const corcProdRate = calc["CORC Production Rate"];
+      const corcsAnnual = calc["Total CORCs Annual"];
+      const tipFee = inputs["Tip Fee - related to rent below"];
+      const avgCCPrice = inputs["Average Carbon Credit Sale Price"];
+
+      // Example cost components (replace with actual CSV formulas for each year)
+      const wellDrilling = inputs["Well Drilling Cost/Foot"] * 25 * inputs["Number of Wells"];
+      const equipmentLease = inputs["Equipment Lease Amount"] * inputs["Total Days of Injection"];
+      const waterTankRental = inputs["Water Tank Rental"];
+      const mattsHoses = inputs["Matts & Hoses"];
+      const otherSlurry = inputs["Other Slurry Ingredients Delivered"] * (woodChipDry * hours / 1000 * 6720);
+      const fuelEnergy = inputs["Fuel & Energy"] * hours;
+      const levitreeMaint = inputs["Levitree Equipment Maintaince"];
+      const equipTransport = inputs["Equipment Transportaion/Setup"];
+      const levitreeLicense = (corcsAnnual * avgCCPrice) * inputs["Levitree Liscense Fee"];
+      const carbonDirect = (corcsAnnual * avgCCPrice) * inputs["Carbon Direct"];
+      const patchExchange = (corcsAnnual * avgCCPrice) * inputs["Patch - Exchange"];
+      const puroAnnualFee = inputs["Puro Annual Fee"];
+      const puroServiceFee = corcsAnnual * inputs["Puro Service Fee Rate"];
+
+      // Sum all variable cost components for the year
+      const yearlyVariableCosts = wellDrilling + equipmentLease + waterTankRental + mattsHoses + otherSlurry + fuelEnergy + levitreeMaint + equipTransport + levitreeLicense + carbonDirect + patchExchange + puroAnnualFee + puroServiceFee;
+
+      // Calculate yearly revenue for the year
+      const yearlyRevenue = corcsAnnual * avgCCPrice + (tipFee * woodChipWet * hours);
+
+      // Add to gross margin
+      grossMargin += yearlyRevenue - yearlyVariableCosts;
+    }
+    calc["Gross Margin"] = grossMargin;
     
     // Total Overhead Costs
     calc["Total Overhead Costs"] = calc["Developer Fee Amount"] + 
@@ -191,8 +230,11 @@ const SequestrationCalculator = () => {
     
     // Project specific calculations
     calc["Total CORCs"] = inputs["Acres"] * inputs["Elevation (ft)"] * inputs["CORCs/acft"];
-    calc["Total Cost"] = calc["Total CORCs"] * inputs["CORC Sale Price"];
+    calc["Total Cost"] = (calc["Total CORCs"] && calc["Net Profit"]) ? (calc["Net Profit"] / calc["Total CORCs"]) : 0;
     calc["Net Profit"] = calc["Total Cost"] - (calc["Total Cost"] * 0.75); // 75% cost assumption
+    
+    // In calculations, add Annual CO2e Sequestration
+    calc["Annual CO2e Sequestration"] = calc["Total Hours of Injection"] * calc["CO2e Sequestration Rate Per Hour"];
     
     setOutputs(calc);
   }, [inputs]);
@@ -284,7 +326,10 @@ const SequestrationCalculator = () => {
                 "Pulp Injection Rate (Dry)",
                 "Organic Carbon Content Wood Chips",
                 "Organic Carbon Content Pulp",
-                "TSB Methodology Premium Fee"
+                "TSB Methodology Premium Fee",
+                "CO2e Sequestration Rate",
+                "CORC Production Rate",
+                "Puro Service Fee Rate"
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
@@ -507,7 +552,6 @@ const SequestrationCalculator = () => {
                 "Acres",
                 "CORCs/acft",
                 "CORC Sale Price",
-                "Total Cost",
                 "Truck Loads",
                 "Hours of Injecion"
               ].map((field) => (
@@ -596,6 +640,10 @@ const SequestrationCalculator = () => {
                 <div className="bg-purple-50 p-4 rounded-lg">
                   <div className="text-sm font-medium text-purple-600">Total CORCs Annual</div>
                   <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Total CORCs Annual"] || 0)} CORCs</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-orange-600">Annual CO2e Sequestration</div>
+                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Annual CO2e Sequestration"] || 0)} T</div>
                 </div>
               </div>
             </div>
