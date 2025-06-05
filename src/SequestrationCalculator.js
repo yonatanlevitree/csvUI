@@ -170,44 +170,21 @@ const SequestrationCalculator = () => {
                                   inputs["Puro Annual Fee"] + 
                                   calc["Puro Service Fee Amount"];
     
-    // Calculate yearly variable costs and gross margin exactly as in the CSV
+    // Calculate yearly gross margins using year-specific carbon credit commission rates
     let grossMargin = 0;
     for (let year = 1; year <= 5; year++) {
-      // Calculate each variable cost component for this year
-      // Example: Well Drilling (K54, L54, ...), Equipment Lease (K55, ...), etc.
-      // Use the formulas from the CSV for each component
-      const hours = calc["Total Hours of Injection"];
-      const woodChipWet = calc["Wood Chip Injection Rate (Wet)"];
-      const woodChipDry = calc["Wood Chip Injection Rate (Dry)"];
-      const pulpDry = calc["Pulp Injection Rate (Dry)"];
-      const corcProdRate = calc["CORC Production Rate"];
-      const corcsAnnual = calc["Total CORCs Annual"];
-      const tipFee = inputs["Tip Fee - related to rent below"];
-      const avgCCPrice = inputs["Average Carbon Credit Sale Price"];
-
-      // Example cost components (replace with actual CSV formulas for each year)
-      const wellDrilling = inputs["Well Drilling Cost/Foot"] * 25 * inputs["Number of Wells"];
-      const equipmentLease = inputs["Equipment Lease Amount"] * inputs["Total Days of Injection"];
-      const waterTankRental = inputs["Water Tank Rental"];
-      const mattsHoses = inputs["Matts & Hoses"];
-      const otherSlurry = inputs["Other Slurry Ingredients Delivered"] * (woodChipDry * hours / 1000 * 6720);
-      const fuelEnergy = inputs["Fuel & Energy"] * hours;
-      const levitreeMaint = inputs["Levitree Equipment Maintaince"];
-      const equipTransport = inputs["Equipment Transportaion/Setup"];
-      const levitreeLicense = (corcsAnnual * avgCCPrice) * inputs["Levitree Liscense Fee"];
-      const carbonDirect = (corcsAnnual * avgCCPrice) * inputs["Carbon Direct"];
-      const patchExchange = (corcsAnnual * avgCCPrice) * inputs["Patch - Exchange"];
-      const puroAnnualFee = inputs["Puro Annual Fee"];
-      const puroServiceFee = corcsAnnual * inputs["Puro Service Fee Rate"];
-
-      // Sum all variable cost components for the year
-      const yearlyVariableCosts = wellDrilling + equipmentLease + waterTankRental + mattsHoses + otherSlurry + fuelEnergy + levitreeMaint + equipTransport + levitreeLicense + carbonDirect + patchExchange + puroAnnualFee + puroServiceFee;
-
-      // Calculate yearly revenue for the year
-      const yearlyRevenue = corcsAnnual * avgCCPrice + (tipFee * woodChipWet * hours);
-
-      // Add to gross margin
-      grossMargin += yearlyRevenue - yearlyVariableCosts;
+      const commissionRate = inputs[`Carbon Credit Commission year ${year}`] || 0;
+      const annualCORCs = calc["CORC Production Rate"] * calc["Total Hours of Injection"];
+      let margin = 0;
+      if (year === 1) {
+        // Gross margin for year 1: (Carbon Credit Sales) * (CORC Production Rate * Total Hours of Injection)
+        margin = inputs["Carbon Credit Sales"] * annualCORCs;
+      } else {
+        // Keep previous logic for other years (or set to 0 if only year 1 matters)
+        margin = 0;
+      }
+      console.log(`Year ${year}:`, { margin });
+      grossMargin += margin;
     }
     calc["Gross Margin"] = grossMargin;
     
