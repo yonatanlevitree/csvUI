@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, TrendingUp, DollarSign, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import logo from './logo_full copy.png';
 
 const SequestrationCalculator = () => {
   // Input variables exactly as they appear in the CSV
@@ -88,12 +89,13 @@ const SequestrationCalculator = () => {
     "Tech & Tools": 18000,
     "Trailor": 9000,
     
-    // Carbon Credit Commission
+    // Other P&L Assumptions
     "Carbon Credit Commission year 1": 0.05,
     "Carbon Credit Commission year 2": 0.04,
     "Carbon Credit Commission year 3": 0.03,
     "Carbon Credit Commission year 4": 0.02,
     "Carbon Credit Commission year 5": 0.01,
+    "Long Tonne (lbs/metric ton)": 2200,
     
     // Project Parameters
     "Elevation (ft)": 5,
@@ -122,13 +124,25 @@ const SequestrationCalculator = () => {
     general: true,
     carboncredit: true,
     projectparams: true,
+    production: true,
+    annual: true,
+    corcprod: true,
+    revcosts: true,
+    summary: true,
+    plsummary: true,
+    operations: true,
+    overhead: true,
   });
   const toggleCard = (key) => setOpenCards((prev) => ({ ...prev, [key]: !prev[key] }));
 
   // Add expand/collapse all functionality
-  const allOpen = Object.values(openCards).every(Boolean);
-  const handleExpandCollapseAll = () => {
-    const newState = Object.fromEntries(Object.keys(openCards).map(key => [key, !allOpen]));
+  const allInputsOpen = ["sequestration", "assumptions", "revenue", "preconstruction", "injection", "verification", "consultants", "insurance", "general", "carboncredit", "projectparams"].every(key => openCards[key]);
+  const allOutputsOpen = ["production", "annual", "corcprod", "revcosts", "summary", "plsummary", "operations", "overhead"].every(key => openCards[key]);
+  const handleExpandCollapseAll = (type) => {
+    const keys = type === 'inputs' ? ["sequestration", "assumptions", "revenue", "preconstruction", "injection", "verification", "consultants", "insurance", "general", "carboncredit", "projectparams"] : ["production", "annual", "corcprod", "revcosts", "summary", "plsummary", "operations", "overhead"];
+    const newState = { ...openCards };
+    const newValue = type === 'inputs' ? !allInputsOpen : !allOutputsOpen;
+    keys.forEach(key => { newState[key] = newValue; });
     setOpenCards(newState);
   };
 
@@ -278,7 +292,7 @@ const SequestrationCalculator = () => {
     calc["Total CORCs"] = inputs["Acres"] * inputs["Elevation (ft)"] * inputs["CORCs/acft"];
     calc["Total acft of Elevation"] = inputs["Acres"] * inputs["Elevation (ft)"];
     calc["Total Truckloads"] = inputs["Truck Loads"] * calc["Total acft of Elevation"];
-    calc["Total Hours of Injection"] = inputs["Hours of Injecion"] * calc["Total acft of Elevation"];
+    calc["Total Hours of Injection:"] = inputs["Hours of Injecion"] * calc["Total acft of Elevation"];
     calc["Total CORC Sale Price"] = inputs["CORC Sale Price"] * calc["Total CORCs"];
     calc["Total Cost"] = calc["Total CORC Sale Price"] * 0.75;
     calc["Net Profit"] = calc["Total CORC Sale Price"] - calc["Total Cost"]; 
@@ -322,27 +336,43 @@ const SequestrationCalculator = () => {
     <div className="max-w-[2000px] mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg mb-6">
         <div className="p-6 border-b">
-          <div className="flex items-center gap-3 mb-2">
-            <Calculator className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Sequestration PROFORMA</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Calculator className="w-8 h-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Sequestration PROFORMA</h1>
+            </div>
+            <img src={logo} alt="Levitree Logo" className="h-20" />
           </div>
           <p className="text-gray-600">Based on number of hours injection the site can facilitate</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold text-gray-800">Input Parameters</h2>
+          <button
+            onClick={() => handleExpandCollapseAll('inputs')}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium shadow"
+          >
+            {allInputsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {allInputsOpen ? 'Collapse All Inputs' : 'Expand All Inputs'}
+          </button>
+        </div>
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold text-gray-800">Calculated Metrics</h2>
+          <button
+            onClick={() => handleExpandCollapseAll('outputs')}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium shadow"
+          >
+            {allOutputsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {allOutputsOpen ? 'Collapse All Outputs' : 'Expand All Outputs'}
+          </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Inputs */}
         <div className="space-y-6">
-          {/* Expand/Collapse All Button */}
-          <div className="flex justify-end mb-2">
-            <button
-              onClick={handleExpandCollapseAll}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium shadow"
-            >
-              {allOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              {allOpen ? 'Collapse All' : 'Expand All'}
-            </button>
-          </div>
           {/* Sequestration Assumptions */}
           <div className="bg-white rounded-lg shadow p-6 mb-2">
             <div className="flex items-center justify-between mb-4">
@@ -643,10 +673,10 @@ const SequestrationCalculator = () => {
             </div>
           </div>
 
-          {/* Carbon Credit Commission */}
+          {/* Other P&L Assumptions */}
           <div className="bg-white rounded-lg shadow p-6 mb-2">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Carbon Credit Commission</h2>
+              <h2 className="text-xl font-semibold">Other P&L Assumptions</h2>
               <button onClick={() => toggleCard('carboncredit')} className="p-1 rounded hover:bg-gray-100">
                 {openCards.carboncredit ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </button>
@@ -669,6 +699,21 @@ const SequestrationCalculator = () => {
                     </div>
                   </div>
                 ))}
+                {/* Long Tonne (lbs/metric ton) input */}
+                <div key="Long Tonne (lbs/metric ton)">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Long Tonne (lbs/metric ton)</label>
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs["Long Tonne (lbs/metric ton)"]}
+                      onChange={e => handleInputChange("Long Tonne (lbs/metric ton)", e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields["Long Tonne (lbs/metric ton)"] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -707,169 +752,334 @@ const SequestrationCalculator = () => {
         {/* Right Column - Outputs */}
         <div className="space-y-6">
           {/* Production Metrics */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              Production Metrics
-            </h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-blue-600">Total Hours of Injection</div>
-                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total Hours of Injection"] || 0)}</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Wet)</div>
-                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet)"] || 0)} T/hr</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-purple-600">Wood Chip Injection Rate (Dry)</div>
-                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry)"] || 0)} T/hr</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-orange-600">Pulp Injection Rate (Dry)</div>
-                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Pulp Injection Rate (Dry)"] || 0)} T/hr</div>
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                Production Metrics
+              </h2>
+              <button onClick={() => toggleCard('production')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.production ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.production ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-blue-600">Total Hours of Injection</div>
+                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total Hours of Injection"] || 0)}</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Wet)</div>
+                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet)"] || 0)} T/hr</div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-purple-600">Wood Chip Injection Rate (Dry)</div>
+                    <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry)"] || 0)} T/hr</div>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-orange-600">Pulp Injection Rate (Dry)</div>
+                    <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Pulp Injection Rate (Dry)"] || 0)} T/hr</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Annual Production */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Annual Production</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-blue-600">Wood Chip Injection Rate (Wet) Annual</div>
-                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] || 0)} T</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Dry) Annual</div>
-                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry) Annual"] || 0)} T</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-purple-600">Pulp Injection Rate (Dry) Annual</div>
-                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Pulp Injection Rate (Dry) Annual"] || 0)} T</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-orange-600">CO2e Sequestration Rate Annual</div>
-                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["CO2e Sequestration Rate Annual"] || 0)} T</div>
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Annual Production</h2>
+              <button onClick={() => toggleCard('annual')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.annual ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.annual ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-blue-600">Wood Chip Injection Rate (Wet) Annual</div>
+                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] || 0)} T</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Dry) Annual</div>
+                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry) Annual"] || 0)} T</div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-purple-600">Pulp Injection Rate (Dry) Annual</div>
+                    <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Pulp Injection Rate (Dry) Annual"] || 0)} T</div>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-orange-600">CO2e Sequestration Rate Annual</div>
+                    <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["CO2e Sequestration Rate Annual"] || 0)} T</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* CORC Production */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">CORC Production</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-blue-600">CO2e Sequestration Rate Per Hour</div>
-                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["CO2e Sequestration Rate Per Hour"] || 0)} T/hr</div>
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">CORC Production</h2>
+              <button onClick={() => toggleCard('corcprod')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.corcprod ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.corcprod ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-blue-600">CO2e Sequestration Rate Per Hour</div>
+                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["CO2e Sequestration Rate Per Hour"] || 0)} T/hr</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-600">CORC Production Rate</div>
+                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["CORC Production Rate"] || 0)} CORCs/hr</div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-purple-600">Total CORCs Annual</div>
+                    <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Total CORCs Annual"] || 0)} CORCs</div>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-orange-600">Annual CO2e Sequestration</div>
+                    <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Annual CO2e Sequestration"] || 0)} T</div>
+                  </div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">CORC Production Rate</div>
-                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["CORC Production Rate"] || 0)} CORCs/hr</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Overhead Costs */}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Overhead Costs</h2>
+              <button onClick={() => toggleCard('overhead')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.overhead ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.overhead ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Total Insurance Cost</span>
+                  <span className="text-lg font-bold text-red-600">{formatCurrency(5 * (inputs["General Liability"] + inputs["Property"] + inputs["Equipment"] + inputs["E&O"] + inputs["Cyber"] + inputs["Auto"] + inputs["Tail Coverage"] + inputs["Contractor Pollution"] + inputs["Site Pollution"] + inputs["Excess Policies"]) || 0)}</span>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-purple-600">Total CORCs Annual</div>
-                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Total CORCs Annual"] || 0)} CORCs</div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Total Developer Fee</span>
+                  <span className="text-lg font-bold text-red-600">{formatCurrency(inputs["Developer Fee"] * outputs["Total Revenue"] || 0)}</span>
                 </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-orange-600">Annual CO2e Sequestration</div>
-                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Annual CO2e Sequestration"] || 0)} T</div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Total Accounting & Tax Cost</span>
+                  <span className="text-lg font-bold text-red-600">{formatCurrency(inputs["Accounting & Tax - Baker Tilly"] * 5 || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Total Jerry Gutierrez Labor Contract Cost</span>
+                  <span className="text-lg font-bold text-red-600">{formatCurrency(inputs["Jerry Gutierrez Labor Contract"] * outputs["Total Hours of Injection"] * 5 || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Total Legal Cost</span>
+                  <span className="text-lg font-bold text-red-600">{formatCurrency(inputs["Legal - Misc"] * 5 || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">General Conditions</span>
+                  <span className="text-lg font-bold text-red-600">{formatCurrency(5 * (inputs["Internet - Starlink"] + inputs["Portables / Toilet"] + inputs["Fencing"] + inputs["Battery Generator"] + inputs["Telco"] + inputs["Tech & Tools"] + inputs["Trailor"]) || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 bg-gray-100 px-3 rounded font-bold">
+                  <span className="text-lg">Total Overhead Costs</span>
+                  <span className="text-xl text-gray-900">{formatCurrency(5 * (inputs["General Liability"] + inputs["Property"] + inputs["Equipment"] + inputs["E&O"] + inputs["Cyber"] + inputs["Auto"] + inputs["Tail Coverage"] + inputs["Contractor Pollution"] + inputs["Site Pollution"] + inputs["Excess Policies"]) + inputs["Developer Fee"] * outputs["Total Revenue"] + inputs["Accounting & Tax - Baker Tilly"] * 5 + inputs["Jerry Gutierrez Labor Contract"] * outputs["Total Hours of Injection"] * 5 + inputs["Legal - Misc"] * 5 + 5 * (inputs["Internet - Starlink"] + inputs["Portables / Toilet"] + inputs["Fencing"] + inputs["Battery Generator"] + inputs["Telco"] + inputs["Tech & Tools"] + inputs["Trailor"]) || 0)}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Revenue & Costs */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
-              Revenue & Costs
-            </h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-medium">Carbon Credit Sales</span>
-                <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Carbon Credit Sales"] || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-medium">Tip Fee Revenue</span>
-                <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Tip Fee - related to rent below"] || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-medium">Total Revenue</span>
-                <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Total Revenue"] || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-medium">Total Variable Costs</span>
-                <span className="text-lg font-bold text-red-600">{formatCurrency(outputs["Total Variable Costs"] || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b bg-blue-50 px-3 rounded">
-                <span className="font-medium">Gross Margin</span>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-blue-600">{formatCurrency(outputs["Gross Margin"] || 0)}</div>
-                  <div className="text-sm text-blue-500">GM%: {formatPercent(outputs["GM%"] || 0)}</div>
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-green-600" />
+                Revenue & Costs
+              </h2>
+              <button onClick={() => toggleCard('revcosts')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.revcosts ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.revcosts ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Carbon Credit Sales</span>
+                  <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Carbon Credit Sales"] || 0)}</span>
                 </div>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-medium">Total Overhead Costs</span>
-                <span className="text-lg font-bold text-red-600">{formatCurrency(outputs["Total Overhead Costs"] || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b bg-green-50 px-3 rounded">
-                <span className="font-medium">Net Profit before Land Owner Split</span>
-                <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Net Profit before Land Owner Split"] || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-medium">Land Owner Split Amount</span>
-                <span className="text-lg font-bold text-orange-600">{formatCurrency(outputs["Land Owner Split Amount"] || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 bg-gray-100 px-3 rounded font-bold">
-                <span className="text-lg">Net Profit to SPE / Taxable Income</span>
-                <span className="text-xl text-gray-900">{formatCurrency(outputs["Net Profit to SPE / Taxable Income"] || 0)}</span>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Tip Fee Revenue</span>
+                  <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Tip Fee - related to rent below"] || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Total Revenue</span>
+                  <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Total Revenue"] || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Total Variable Costs</span>
+                  <span className="text-lg font-bold text-red-600">{formatCurrency(outputs["Total Variable Costs"] || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b bg-blue-50 px-3 rounded">
+                  <span className="font-medium">Gross Margin</span>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-blue-600">{formatCurrency(outputs["Gross Margin"] || 0)}</div>
+                    <div className="text-sm text-blue-500">GM%: {formatPercent(outputs["GM%"] || 0)}</div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Total Overhead Costs</span>
+                  <span className="text-lg font-bold text-red-600">{formatCurrency(outputs["Total Overhead Costs"] || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b bg-green-50 px-3 rounded">
+                  <span className="font-medium">Net Profit before Land Owner Split</span>
+                  <span className="text-lg font-bold text-green-600">{formatCurrency(outputs["Net Profit before Land Owner Split"] || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Land Owner Split Amount</span>
+                  <span className="text-lg font-bold text-orange-600">{formatCurrency(outputs["Land Owner Split Amount"] || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 bg-gray-100 px-3 rounded font-bold">
+                  <span className="text-lg">Net Profit to SPE / Taxable Income</span>
+                  <span className="text-xl text-gray-900">{formatCurrency(outputs["Net Profit to SPE / Taxable Income"] || 0)}</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Project Summary */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Project Summary</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-blue-600">Total CORCs</div>
-                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total CORCs"] || 0)}</div>
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Project Summary</h2>
+              <button onClick={() => toggleCard('summary')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.summary ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.summary ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-blue-600">Total CORCs</div>
+                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total CORCs"] || 0)}</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-600">Total acft of Elevation</div>
+                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total acft of Elevation"] || 0)}</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-600">Total Truckloads</div>
+                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total Truckloads"] || 0)}</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-600">Total Hours of Injection</div>
+                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total Hours of Injection"] || 0)}</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-600">Total CORC Sale Price</div>
+                    <div className="text-2xl font-bold text-green-900">{formatCurrency(outputs["Total CORC Sale Price"] || 0)}</div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-purple-600">Total Cost</div>
+                    <div className="text-2xl font-bold text-purple-900">{formatCurrency(outputs["Total Cost"] || 0)}</div>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-orange-600">Net Profit</div>
+                    <div className="text-2xl font-bold text-orange-900">{formatCurrency(outputs["Net Profit"] || 0)}</div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-purple-600">Profit Margin</div>
+                    <div className="text-2xl font-bold text-purple-900">{formatPercent(outputs["Net Profit"] / outputs["Total Cost"] || 0)}</div>
+                  </div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">Total acft of Elevation</div>
-                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total acft of Elevation"] || 0)}</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">Total Truckloads</div>
-                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total Truckloads"] || 0)}</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">Total Hours of Injection</div>
-                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Total Hours of Injection"] || 0)}</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">Total CORC Sale Price</div>
-                  <div className="text-2xl font-bold text-green-900">{formatCurrency(outputs["Total CORC Sale Price"] || 0)}</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-purple-600">Total Cost</div>
-                  <div className="text-2xl font-bold text-purple-900">{formatCurrency(outputs["Total Cost"] || 0)}</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-orange-600">Net Profit</div>
-                  <div className="text-2xl font-bold text-orange-900">{formatCurrency(outputs["Net Profit"] || 0)}</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-purple-600">Profit Margin</div>
-                  <div className="text-2xl font-bold text-purple-900">{formatPercent(outputs["Net Profit"] / outputs["Total Cost"] || 0)}</div>
-                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* P&L Summary */}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">P&L Summary</h2>
+              <button onClick={() => toggleCard('plsummary')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.plsummary ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.plsummary ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Metric</th>
+                      <th className="px-3 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Per 1 acft</th>
+                      <th className="px-3 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Total</th>
+                      <th className="px-3 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Canalways Project</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-3 py-2 text-sm font-bold text-gray-900">Wood Chip Injection (Wet) Tonnes</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / 750 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 * 80 / 750 || 0)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 text-sm font-bold text-gray-900">20 Tonne Truck Loads of Wood Chip (18.15 Tonnes of Cargo)</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / (750 * 18.5) || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / 18.5 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 * 80 / (750 * 18.5) || 0)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 text-sm font-bold text-gray-900">Total Hours of Injection</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Total Hours of Injection"] * 5 / 750 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Total Hours of Injection"] * 5 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Total Hours of Injection"] * 5 * 80 / 750 || 0)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Operations Summary */}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Operations Summary</h2>
+              <button onClick={() => toggleCard('operations')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.operations ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.operations ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}> 
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Metric</th>
+                      <th className="px-3 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Per 1 acft</th>
+                      <th className="px-3 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Total</th>
+                      <th className="px-3 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Canalways Project</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-3 py-2 text-sm font-bold text-gray-900">Wood Chip Injection (Wet) Tonnes</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / 750 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 * 80 / 750 || 0)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 text-sm font-bold text-gray-900">20 Tonne Truck Loads of Wood Chip (18.15 Tonnes of Cargo)</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / (750 * 18.5) || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / 18.5 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 * 80 / (750 * 18.5) || 0)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 text-sm font-bold text-gray-900">Total Hours of Injection</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Total Hours of Injection"] * 5 / 750 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Total Hours of Injection"] * 5 || 0)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{formatNumber(outputs["Total Hours of Injection"] * 5 * 80 / 750 || 0)}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
