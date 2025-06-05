@@ -386,7 +386,7 @@ const SequestrationCalculator = () => {
             </div>
             <div className={`transition-all duration-300 overflow-hidden ${openCards.sequestration ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="grid grid-cols-2 gap-4">
-                {["Daily Hours of Operation","Total Days of Injection","Average Carbon Credit Sale Price","Wood Chip Moisture Content","CORC Verifier Emission Discount Rate","Delivered Wood Consumption Rate per Hour","Chipper Truckloads Daily per Hour","CO2e Sequestration Rate","Number of Wells","Well Drilling Cost/Foot","Injection Rigs Per Project","Equipment Lease Amount","Model Start Date","Injection Start Date"].map((field) => (
+                {["Daily Hours of Operation","Total Days of Injection","Average Carbon Credit Sale Price","Wood Chip Moisture Content"].map((field) => (
                   <div key={field}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
                     <div className="relative w-full">
@@ -402,6 +402,46 @@ const SequestrationCalculator = () => {
                     </div>
                   </div>
                 ))}
+                <div key="CORC Verifier Emission Discount Rate">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    CORC Verifier Emission Discount Rate
+                    <span className="ml-2 text-blue-500 cursor-help relative group">
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-black text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-0 w-48">avg 55%; can be in future 10% maybe</span>
+                      ℹ️
+                    </span>
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs["CORC Verifier Emission Discount Rate"]}
+                      onChange={(e) => handleInputChange("CORC Verifier Emission Discount Rate", e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields["CORC Verifier Emission Discount Rate"] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
+                </div>
+                <div key="Number of Wells">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    Number of Wells
+                    <span className="ml-2 text-blue-500 cursor-help relative group">
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-black text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-0 w-48">1-2 people per well; 1 hr per well</span>
+                      ℹ️
+                    </span>
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs["Number of Wells"]}
+                      onChange={(e) => handleInputChange("Number of Wells", e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields["Number of Wells"] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
