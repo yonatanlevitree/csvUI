@@ -7,7 +7,7 @@ const SequestrationCalculator = () => {
     // Sequestration Assumptions
     "Daily Hours of Operation": 8,
     "Total Days of Injection": 175,
-    "Average Carbon Credit Sale Price": 200,
+    "Average Carbon Credit Sale Price": 400,
     "Wood Chip Moisture Content": 0.40,
     "CORC Verifier Emission Discount Rate": 0.37,
     "Delivered Wood Consumption Rate per Hour": 11,
@@ -30,7 +30,7 @@ const SequestrationCalculator = () => {
     "Organic Carbon Content Pulp": 0.45,
     "CO2e Sequestration Rate": 14,
     "CORC Production Rate": 9,
-    "Puro Service Fee Rate": 0.10,
+    "Puro Service Fee Rate": 5.78,
     "TSB Methodology Premium Fee": 0.12,
     "Puro Service Fee Discounted?": false,
     
@@ -105,6 +105,9 @@ const SequestrationCalculator = () => {
 
   const [outputs, setOutputs] = useState({});
 
+  // Add state to track which fields have been modified
+  const [modifiedFields, setModifiedFields] = useState({});
+
   // Calculate all derived values exactly as in CSV
   useEffect(() => {
     const calc = {};
@@ -131,19 +134,25 @@ const SequestrationCalculator = () => {
     calc["Total CORCs Annual"] = calc["CORC Production Rate"] * calc["Total Hours of Injection"];
     
     // Revenue calculations
-    calc["Carbon Credit Sales"] = calc["Total CORCs Annual"] * inputs["Average Carbon Credit Sale Price"] * 10;
+    calc["Carbon Credit Sales"] = calc["Total CORCs Annual"] * inputs["Average Carbon Credit Sale Price"];
     calc["Tip Fee - related to rent below"] = inputs["Tip Fee - related to rent below"] * calc["Wood Chip Injection Rate (Wet) Annual"];
-    calc["Total Revenue"] = calc["Carbon Credit Sales"] + calc["Tip Fee - related to rent below"];
     
+    calc["Total Revenue"] = 5*(calc["Carbon Credit Sales"] + calc["Tip Fee - related to rent below"]);
+    
+    console.log("Total CORCs Annual:", calc["Total CORCs Annual"]);
+    console.log("Average Carbon Credit Sale Price:", inputs["Average Carbon Credit Sale Price"]);
+    console.log("Carbon Credit Sales:", calc["Carbon Credit Sales"]);
+    console.log("Tip Fee - related to rent below:", calc["Tip Fee - related to rent below"]);
+    console.log("Total Revenue:", calc["Total Revenue"]);
     // Calculate service fees based on percentages
     calc["Levitree Liscense Fee Amount"] = calc["Carbon Credit Sales"] * inputs["Levitree Liscense Fee"];
     calc["Carbon Direct Amount"] = calc["Carbon Credit Sales"] * inputs["Carbon Direct"];
     calc["Patch - Exchange Amount"] = calc["Carbon Credit Sales"] * inputs["Patch - Exchange"];
-    calc["Puro Service Fee Amount"] = calc["Total CORCs Annual"] * inputs["Puro Service Fee"];
+    calc["Puro Service Fee Amount"] = calc["Total CORCs Annual"] * inputs["Puro Service Fee Rate"] * (1 + inputs["TSB Methodology Premium Fee"]);
     
     // Slurry ingredients calculation
     calc["Other Slurry Ingredients Delivered Amount"] = inputs["Other Slurry Ingredients Delivered"] * 
-                                                       (calc["Wood Chip Injection Rate (Dry) Annual"] / 1000 * 6720);
+                                                       (calc["Wood Chip Injection Rate (Wet) Annual"] * 0.096);
     
     // Fuel & Energy calculation
     calc["Fuel & Energy Amount"] = inputs["Fuel & Energy"] * calc["Total Hours of Injection"];
@@ -154,39 +163,75 @@ const SequestrationCalculator = () => {
     // Developer Fee calculation
     calc["Developer Fee Amount"] = calc["Carbon Credit Sales"] * inputs["Developer Fee"];
     
-    // Total Variable Costs
-    calc["Total Variable Costs"] = inputs["Well Drilling"] + 
-                                  (inputs["Equipment Lease Amount"] * inputs["Total Days of Injection"]) + 
-                                  inputs["Water Tank Rental"] + 
-                                  inputs["Matts & Hoses"] + 
-                                  inputs["Wood Biomass Processed/Delivered/Chipped"] + 
-                                  calc["Other Slurry Ingredients Delivered Amount"] + 
-                                  calc["Fuel & Energy Amount"] + 
-                                  inputs["Levitree Equipment Maintaince"] + 
-                                  inputs["Equipment Transportaion/Setup"] + 
-                                  calc["Levitree Liscense Fee Amount"] + 
-                                  calc["Carbon Direct Amount"] + 
-                                  calc["Patch - Exchange Amount"] + 
-                                  inputs["Puro Annual Fee"] + 
-                                  calc["Puro Service Fee Amount"];
+    // Well Drilling calculation (from spreadsheet: Number of Wells * 25 * Well Drilling Cost/Foot)
+    calc["Well Drilling"] = (inputs["Number of Wells"] || 0) * 25 * (inputs["Well Drilling Cost/Foot"] || 0);
     
-    // Calculate yearly gross margins using year-specific carbon credit commission rates
+    // Wood Biomass Processed/Delivered/Chipped calculation (from spreadsheet: (Wood Chip Injection Rate (Wet) Annual / 26) * 1000)
+    calc["Wood Biomass Processed/Delivered/Chipped"] = (calc["Wood Chip Injection Rate (Wet) Annual"] || 0) / 26 * 1000;
+    
+    // Update the total variable cost calculation to include only the specified parameters
+    let totalVariableCosts = 0;
+    for (let year = 1; year <= 5; year++) {
+      const isFirstYear = (year === 1);
+      const yearVariableCosts =
+        (isFirstYear ? (inputs["Engineering & Design"] || 0) : 0) +
+        (isFirstYear ? (inputs["Permitting & Approvals"] || 0) : 0) +
+        (isFirstYear ? (inputs["Legal"] || 0) : 0) +
+        (isFirstYear ? (inputs["Site Work / Materials Yard - Pre-Construction"] || 0) : 0) +
+        (isFirstYear ? (inputs["Setup Cost"] || 0) : 0) +
+        (inputs["Land Lease Cost"] || 0) +
+        (calc["Well Drilling"] || 0) +
+        ((inputs["Equipment Lease Amount"] || 0) * (inputs["Total Days of Injection"] || 0))/5 +
+        (inputs["Leased Commodity Equipment Rain 4 Rent"] || 0) +
+        (inputs["Water Tank Rental"] || 0) +
+        (inputs["Matts & Hoses"] || 0) +
+        (calc["Wood Biomass Processed/Delivered/Chipped"] || 0) +
+        (calc["Other Slurry Ingredients Delivered Amount"] || 0) +
+        (calc["Fuel & Energy Amount"] || 0) +
+        (inputs["Levitree Equipment Maintaince"] || 0) +
+        (inputs["Equipment Transportaion/Setup"] || 0) +
+        (calc["Levitree Liscense Fee Amount"] || 0) +
+        (calc["Carbon Direct Amount"] || 0) +
+        (calc["Patch - Exchange Amount"] || 0) +
+        (inputs["Puro Annual Fee"] || 0) +
+        (calc["Puro Service Fee Amount"] || 0);
+      if (year === 1) {
+        console.log("Engineering & Design:", inputs["Engineering & Design"]);
+        console.log("Permitting & Approvals:", inputs["Permitting & Approvals"]);
+        console.log("Legal:", inputs["Legal"]);
+        console.log("Site Work / Materials Yard - Pre-Construction:", inputs["Site Work / Materials Yard - Pre-Construction"]);
+        console.log("Setup Cost:", inputs["Setup Cost"]);
+        console.log("Land Lease Cost:", inputs["Land Lease Cost"]);
+        console.log("Well Drilling:", calc["Well Drilling"]);
+        console.log("Equipment Lease Amount (annualized):", ((inputs["Equipment Lease Amount"] || 0) * (inputs["Total Days of Injection"] || 0))/5);
+        console.log("Leased Commodity Equipment Rain 4 Rent:", inputs["Leased Commodity Equipment Rain 4 Rent"]);
+        console.log("Water Tank Rental:", inputs["Water Tank Rental"]);
+        console.log("Matts & Hoses:", inputs["Matts & Hoses"]);
+        console.log("Wood Biomass Processed/Delivered/Chipped:", calc["Wood Biomass Processed/Delivered/Chipped"]);
+        console.log("Other Slurry Ingredients Delivered Amount:", calc["Other Slurry Ingredients Delivered Amount"]);
+        console.log("Fuel & Energy Amount:", calc["Fuel & Energy Amount"]);
+        console.log("Levitree Equipment Maintaince:", inputs["Levitree Equipment Maintaince"]);
+        console.log("Equipment Transportaion/Setup:", inputs["Equipment Transportaion/Setup"]);
+        console.log("Levitree Liscense Fee Amount:", calc["Levitree Liscense Fee Amount"]);
+        console.log("Carbon Direct Amount:", calc["Carbon Direct Amount"]);
+        console.log("Patch - Exchange Amount:", calc["Patch - Exchange Amount"]);
+        console.log("Puro Annual Fee:", inputs["Puro Annual Fee"]);
+        console.log("Puro Service Fee Amount:", calc["Puro Service Fee Amount"]);
+      }
+      totalVariableCosts += yearVariableCosts;
+    }
+    calc["Total Variable Costs"] = totalVariableCosts;
+    
+    // Update the gross margin calculation to sum values for all 5 years
     let grossMargin = 0;
     for (let year = 1; year <= 5; year++) {
       const commissionRate = inputs[`Carbon Credit Commission year ${year}`] || 0;
       const annualCORCs = calc["CORC Production Rate"] * calc["Total Hours of Injection"];
-      let margin = 0;
-      if (year === 1) {
-        // Gross margin for year 1: (Carbon Credit Sales) * (CORC Production Rate * Total Hours of Injection)
-        margin = inputs["Carbon Credit Sales"] * annualCORCs;
-      } else {
-        // Keep previous logic for other years (or set to 0 if only year 1 matters)
-        margin = 0;
-      }
+      const margin = inputs["Carbon Credit Sales"] * annualCORCs;
       console.log(`Year ${year}:`, { margin });
       grossMargin += margin;
     }
-    calc["Gross Margin"] = grossMargin;
+    calc["Gross Margin"] = grossMargin - calc["Total Variable Costs"];
     
     // Total Overhead Costs
     calc["Total Overhead Costs"] = calc["Developer Fee Amount"] + 
@@ -216,10 +261,15 @@ const SequestrationCalculator = () => {
     setOutputs(calc);
   }, [inputs]);
 
+  // Update handleInputChange to track modifications
   const handleInputChange = (key, value) => {
     setInputs(prev => ({
       ...prev,
       [key]: parseFloat(value) || 0
+    }));
+    setModifiedFields(prev => ({
+      ...prev,
+      [key]: true
     }));
   };
 
@@ -280,12 +330,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -310,12 +365,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
               <div>
@@ -340,12 +400,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -364,12 +429,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -390,12 +460,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -413,12 +488,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -436,12 +516,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -465,12 +550,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -491,12 +581,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -508,13 +603,18 @@ const SequestrationCalculator = () => {
             <div className="grid grid-cols-2 gap-4">
               {[1, 2, 3, 4, 5].map((year) => (
                 <div key={year}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Year {year}</label>
-                  <input
-                    type="number"
-                    value={inputs[`Carbon Credit Commission year ${year}`]}
-                    onChange={(e) => handleInputChange(`Carbon Credit Commission year ${year}`, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Carbon Credit Commission year {year}</label>
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[`Carbon Credit Commission year ${year}`]}
+                      onChange={(e) => handleInputChange(`Carbon Credit Commission year ${year}`, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[`Carbon Credit Commission year ${year}`] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -534,12 +634,17 @@ const SequestrationCalculator = () => {
               ].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <input
-                    type="number"
-                    value={inputs[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={inputs[field]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {!modifiedFields[field] && (
+                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
