@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, TrendingUp, DollarSign, Zap } from 'lucide-react';
+import { Calculator, TrendingUp, DollarSign, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 const SequestrationCalculator = () => {
   // Input variables exactly as they appear in the CSV
@@ -107,6 +107,29 @@ const SequestrationCalculator = () => {
 
   // Add state to track which fields have been modified
   const [modifiedFields, setModifiedFields] = useState({});
+
+  // Collapsible state for each card
+  const [openCards, setOpenCards] = useState({
+    sequestration: true,
+    assumptions: true,
+    revenue: true,
+    preconstruction: true,
+    injection: true,
+    verification: true,
+    consultants: true,
+    insurance: true,
+    general: true,
+    carboncredit: true,
+    projectparams: true,
+  });
+  const toggleCard = (key) => setOpenCards((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  // Add expand/collapse all functionality
+  const allOpen = Object.values(openCards).every(Boolean);
+  const handleExpandCollapseAll = () => {
+    const newState = Object.fromEntries(Object.keys(openCards).map(key => [key, !allOpen]));
+    setOpenCards(newState);
+  };
 
   // Calculate all derived values exactly as in CSV
   useEffect(() => {
@@ -305,348 +328,355 @@ const SequestrationCalculator = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Inputs */}
         <div className="space-y-6">
+          {/* Expand/Collapse All Button */}
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={handleExpandCollapseAll}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium shadow"
+            >
+              {allOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {allOpen ? 'Collapse All' : 'Expand All'}
+            </button>
+          </div>
           {/* Sequestration Assumptions */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-green-600" />
-              Sequestration Assumptions
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Daily Hours of Operation",
-                "Total Days of Injection",
-                "Average Carbon Credit Sale Price",
-                "Wood Chip Moisture Content",
-                "CORC Verifier Emission Discount Rate",
-                "Delivered Wood Consumption Rate per Hour",
-                "Chipper Truckloads Daily per Hour",
-                "CO2e Sequestration Rate",
-                "Number of Wells",
-                "Well Drilling Cost/Foot",
-                "Injection Rigs Per Project",
-                "Equipment Lease Amount",
-                "Model Start Date",
-                "Injection Start Date"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Zap className="w-5 h-5 text-green-600" />
+                Sequestration Assumptions
+              </h2>
+              <button onClick={() => toggleCard('sequestration')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.sequestration ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.sequestration ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Daily Hours of Operation","Total Days of Injection","Average Carbon Credit Sale Price","Wood Chip Moisture Content","CORC Verifier Emission Discount Rate","Delivered Wood Consumption Rate per Hour","Chipper Truckloads Daily per Hour","CO2e Sequestration Rate","Number of Wells","Well Drilling Cost/Foot","Injection Rigs Per Project","Equipment Lease Amount","Model Start Date","Injection Start Date"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Assumptions */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Assumptions</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Number of Projects",
-                "Total Hours of Injection",
-                "Wood Chip Injection Rate (Wet)",
-                "Wood Chip Injection Rate (Dry)",
-                "Pulp Injection Rate (Dry)",
-                "Organic Carbon Content Wood Chips",
-                "Organic Carbon Content Pulp",
-                "TSB Methodology Premium Fee",
-                "CO2e Sequestration Rate",
-                "CORC Production Rate",
-                "Puro Service Fee Rate"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Assumptions</h2>
+              <button onClick={() => toggleCard('assumptions')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.assumptions ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.assumptions ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Number of Projects","Total Hours of Injection","Wood Chip Injection Rate (Wet)","Wood Chip Injection Rate (Dry)","Pulp Injection Rate (Dry)","Organic Carbon Content Wood Chips","Organic Carbon Content Pulp","TSB Methodology Premium Fee","CO2e Sequestration Rate","CORC Production Rate","Puro Service Fee Rate"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
+                ))}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Puro Service Fee Discounted?</label>
+                  <input
+                    type="checkbox"
+                    checked={inputs["Puro Service Fee Discounted?"]}
+                    onChange={(e) => setInputs(prev => ({ ...prev, "Puro Service Fee Discounted?": e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
                 </div>
-              ))}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Puro Service Fee Discounted?</label>
-                <input
-                  type="checkbox"
-                  checked={inputs["Puro Service Fee Discounted?"]}
-                  onChange={(e) => setInputs(prev => ({ ...prev, "Puro Service Fee Discounted?": e.target.checked }))}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
               </div>
             </div>
           </div>
 
           {/* Revenue */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Revenue</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Carbon Credit Sales",
-                "Tip Fee - related to rent below"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Revenue</h2>
+              <button onClick={() => toggleCard('revenue')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.revenue ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.revenue ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Carbon Credit Sales","Tip Fee - related to rent below"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Pre-Construction Costs */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Pre-Construction Costs</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Land Lease Cost",
-                "Engineering & Design",
-                "Permitting & Approvals",
-                "Legal",
-                "Site Work / Materials Yard - Pre-Construction"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Pre-Construction Costs</h2>
+              <button onClick={() => toggleCard('preconstruction')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.preconstruction ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.preconstruction ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Land Lease Cost","Engineering & Design","Permitting & Approvals","Legal","Site Work / Materials Yard - Pre-Construction"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Injection Costs */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Injection Costs</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Setup Cost",
-                "Water Tank Rental",
-                "Matts & Hoses",
-                "Other Slurry Ingredients Delivered",
-                "Fuel & Energy",
-                "Levitree Equipment Maintaince",
-                "Equipment Transportaion/Setup"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Injection Costs</h2>
+              <button onClick={() => toggleCard('injection')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.injection ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.injection ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Setup Cost","Water Tank Rental","Matts & Hoses","Other Slurry Ingredients Delivered","Fuel & Energy","Levitree Equipment Maintaince","Equipment Transportaion/Setup"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Verification/Sales Costs */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Verification/Sales Costs</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Levitree Liscense Fee",
-                "Carbon Direct",
-                "Patch - Exchange",
-                "Puro Annual Fee"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Verification/Sales Costs</h2>
+              <button onClick={() => toggleCard('verification')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.verification ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.verification ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Levitree Liscense Fee","Carbon Direct","Patch - Exchange","Puro Annual Fee"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Consultants */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Consultants</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Developer Fee",
-                "Accounting & Tax - Baker Tilly",
-                "Jerry Gutierrez Labor Contract",
-                "Legal - Misc"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Consultants</h2>
+              <button onClick={() => toggleCard('consultants')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.consultants ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.consultants ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Developer Fee","Accounting & Tax - Baker Tilly","Jerry Gutierrez Labor Contract","Legal - Misc"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Insurance */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Insurance</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "General Liability",
-                "Property",
-                "Equipment",
-                "E&O",
-                "Cyber",
-                "Auto",
-                "Tail Coverage",
-                "Contractor Pollution",
-                "Site Pollution",
-                "Excess Policies"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Insurance</h2>
+              <button onClick={() => toggleCard('insurance')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.insurance ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.insurance ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["General Liability","Property","Equipment","E&O","Cyber","Auto","Tail Coverage","Contractor Pollution","Site Pollution","Excess Policies"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* General Conditions */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">General Conditions</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Internet - Starlink",
-                "Portables / Toilet",
-                "Fencing",
-                "Battery Generator",
-                "Telco",
-                "Tech & Tools",
-                "Trailor"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">General Conditions</h2>
+              <button onClick={() => toggleCard('general')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.general ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.general ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Internet - Starlink","Portables / Toilet","Fencing","Battery Generator","Telco","Tech & Tools","Trailor"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Carbon Credit Commission */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Carbon Credit Commission</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4, 5].map((year) => (
-                <div key={year}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Carbon Credit Commission year {year}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[`Carbon Credit Commission year ${year}`]}
-                      onChange={(e) => handleInputChange(`Carbon Credit Commission year ${year}`, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[`Carbon Credit Commission year ${year}`] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Carbon Credit Commission</h2>
+              <button onClick={() => toggleCard('carboncredit')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.carboncredit ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.carboncredit ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4, 5].map((year) => (
+                  <div key={year}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Carbon Credit Commission year {year}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[`Carbon Credit Commission year ${year}`]}
+                        onChange={(e) => handleInputChange(`Carbon Credit Commission year ${year}`, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[`Carbon Credit Commission year ${year}`] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Project Parameters */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Project Parameters</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Elevation (ft)",
-                "Acres",
-                "CORCs/acft",
-                "CORC Sale Price",
-                "Truck Loads",
-                "Hours of Injecion"
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-                  <div className="relative w-full">
-                    <input
-                      type="number"
-                      value={inputs[field]}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {!modifiedFields[field] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
+          <div className="bg-white rounded-lg shadow p-6 mb-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Project Parameters</h2>
+              <button onClick={() => toggleCard('projectparams')} className="p-1 rounded hover:bg-gray-100">
+                {openCards.projectparams ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.projectparams ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                {["Elevation (ft)","Acres","CORCs/acft","CORC Sale Price","Truck Loads","Hours of Injecion"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                    <div className="relative w-full">
+                      <input
+                        type="number"
+                        value={inputs[field]}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {!modifiedFields[field] && (
+                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
