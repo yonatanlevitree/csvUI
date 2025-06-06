@@ -351,10 +351,24 @@ const SequestrationCalculator = () => {
     const template = await response.text();
     const rows = template.split('\n');
 
-    // Helper to get value from state by field name
+    // Map CSV field names to output keys or calculations
+    const outputFieldMap = {
+      'Net Profit to SPE / Taxable Income': 'Net Profit to SPE / Taxable Income',
+      'Total Developer Fee': '__DEV_FEE__',
+      'Tip Fee Revenue': 'Tip Fee - related to rent below',
+      // Add more mappings as needed
+    };
+
+    // Helper to get value from state by field name or mapping
     const getValue = (field) => {
-      if (outputs[field] !== undefined) return outputs[field];
-      if (inputs[field] !== undefined) return inputs[field];
+      // Special calculation for Total Developer Fee
+      if (outputFieldMap[field] === '__DEV_FEE__') {
+        return (inputs['Developer Fee'] * (outputs['Total Revenue'] || 0)) || '';
+      }
+      // Use mapped output key if present
+      const mappedKey = outputFieldMap[field] || field;
+      if (outputs[mappedKey] !== undefined) return outputs[mappedKey];
+      if (inputs[mappedKey] !== undefined) return inputs[mappedKey];
       return '';
     };
 
