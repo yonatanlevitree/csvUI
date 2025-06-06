@@ -1,0 +1,110 @@
+INPUT VALUES,,,,,,,,OUTPUT VALUES,,,,,
+Section,Field,Value,Unit,Description,Formula,,,,Field,Value,,,
+# Sequestration Assumptions,,,,,,,,,,,,,
+,Daily Hours of Operation,8,hours,,,,,,,,Total Hours of Injection,1400,hours
+,Total Days of Injection,175,days,,,,,,,,Wood Chip Injection Rate (Wet),45870,C7
+,Average Carbon Credit Sale Price/CORC,400,USD,,,,,,,,Wood Chip Injection Rate (Dry),0,Tonnes/hr
+,Wood Chip Moisture Content,0.4,ratio,,,,,,,,Pulp Injection Rate (Dry),0,Tonnes/hr
+,CORC Verifier Emission Discount Rate,0.37,ratio,,,,,,,,Wood Chip Injection Rate (Wet) Annual,0,Tonnes
+,Delivered Wood Consumption Rate per Hour,11,Metric Tonnes,,,,,,,,Pulp Injection Rate (Dry) Annual,0,Tonnes
+,Chipper Truckloads Daily per Hour,2.75,4 Metric Tonnes/ea,,,,,,,,CO2e Sequestration Rate (Metric Tonnes CO2e) Annual,0,Tonnes CO2e
+,CO2e Sequestration Rate,14,Metric Tonnes CO2e,,,,,,,,CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour,0,Tonnes CO2e/hr
+,Number of Wells,125,wells,,,,,,,,Total CORCs Annual,0,CORCs
+,Well Drilling Cost/Foot,10,USD,,,,,,,,Annual CO2e Sequestration,0,Tonnes
+,Injection Rigs Per Project,1,rigs,,,,,,,,Total Insurance Cost,359550.5,USD
+,Equipment Lease Amount,150,USD,,,,,,,,Total Developer Fee,4000,USD
+,Model Start Date,45658,date,,,,,,,,Total Accounting & Tax Cost,0,USD
+,Injection Start Date,45870,date,,,,,,,,Total Jerry Gutierrez Labor Contract Cost,0,USD
+,,,,,,,,,,,Total Legal Cost,0,USD
+,,,,,,,,,,,General Conditions,21470.32,USD
+,,,,,,,,,,,Total Overhead Costs,1905104.1,USD
+,,,,,,,,,,,Carbon Credit Sales,0,USD
+,,,,,,,,,,,Tip Fee Revenue,0,USD
+,,,,,,,,,,,Total Revenue,55,USD
+,,,,,,,,,,,Total Variable Costs,45870,USD
+,,,,,,,,,,,Gross Margin,150,USD
+,,,,,,,,,,,Net Profit before Land Owner Split,0,USD
+,,,,,,,,,,,Land Owner Split Amount,0,USD
+,,,,,,,,,,,Net Profit to SPE / Taxable Income,0,USD
+,,,,,,,,,,,Total CORCs,60000000000,CORCs
+,,,,,,,,,,,Total acft of Elevation,6000000,acft
+,,,,,,,,,,,Total Truckloads,0,loads
+,,,,,,,,,,,Total Hours of Injection,0,hours
+,,,,,,,,,,,Total CORC Sale Price,0,USD
+,,,,,,,,,,,Total Cost,0,USD
+,,,,,,,,,,,Net Profit,0,USD
+,,,,,,,,,,,Profit Margin,#DIV/0!,%
+,,,,,,,,,,,Wood Chip Injection (Wet) Tonnes,0,Tonnes
+,,,,,,,,,,,20 Tonne Truck Loads of Wood Chip (18.15 Tonnes of Cargo),0,loads
+# Assumptions,,,,,,,,,,,,,
+,Number of Projects,1,Each,,,,,,,,,,
+,Total Hours of Injection,1400,hours,,,,,,,,,,
+,Wood Chip Injection Rate (Wet),10,Tonnes/hr,,,,,,,,,,
+,Wood Chip Injection Rate (Dry),6,Tonnes/hr,,,,,,,,,,
+,Pulp Injection Rate (Dry),0.6,Tonnes/hr,,,,,,,,,,
+,Organic Carbon Content Wood Chips,0.48,ratio,,,,,,,,,,
+,Organic Carbon Content Pulp,0.45,ratio,,,,,,,,,,
+,TSB Methodology Premium Fee,0.12,ratio,,,,,,,,,,
+,Puro Service Fee Rate,5.78,USD,,,,,,,,,,
+,Puro Service Fee Discounted?,FALSE,boolean,,,,,,,,,,
+# Revenue,,,,,,,,,,,,,
+,Carbon Credit Sales,400,USD,,,,,,,,,,
+,Tip Fee,0,USD,,,,,,,,,,
+# Pre-Construction Costs,,,,,,,,,,,,,
+,Land Lease Cost,1,USD,,,,,,,,,,
+,Engineering & Design,50000,USD,,,,,,,,,,
+,Permitting & Approvals,50000,USD,,,,,,,,,,
+,Legal,50000,USD,,,,,,,,,,
+,Site Work / Materials Yard,75000,USD,,,,,,,,,,
+,Land Owner Split,0.5,ratio,,,,,,,,,,
+# Injection Costs,,,,,,,,,,,,,
+,Setup Cost,40000,USD,,,,,,,,,,
+,Water Tank Rental,89425,USD,,,,,,,,,,
+,Matts & Hoses,5000,USD,,,,,,,,,,
+,Other Slurry Ingredients Delivered,125,USD,,,,,,,,,,
+,Fuel & Energy,20,USD,,,,,,,,,,
+,Levitree Equipment Maintenance,10000,USD,,,,,,,,,,
+,Equipment Transportation/Setup,10000,USD,,,,,,,,,,
+# Verification/Sales Costs,,,,,,,,,,,,,
+,Levitree License Fee,0.15,ratio,,,,,,,,,,
+,Carbon Direct,0.15,ratio,,,,,,,,,,
+,Patch - Exchange,0.02,ratio,,,,,,,,,,
+,Puro Annual Fee,1470,USD,,,,,,,,,,
+# Consultants,,,,,,,,,,,,,
+,Developer Fee,0.05,ratio,,,,,,,,,,
+,Accounting & Tax - Baker Tilly,60000,USD,,,,,,,,,,
+,Jerry Gutierrez Labor Contract,100,USD,,,,,,,,,,
+,Legal - Misc,10000,USD,,,,,,,,,,
+# Insurance,,,,,,,,,,,,,
+,General Liability,10000,USD,,,,,,,,,,
+,Property,1500,USD,,,,,,,,,,
+,Equipment,1500,USD,,,,,,,,,,
+,E&O,15000,USD,,,,,,,,,,
+,Cyber,1000,USD,,,,,,,,,,
+,Auto,3500,USD,,,,,,,,,,
+,Tail Coverage,20000,USD,,,,,,,,,,
+,Contractor Pollution,2500,USD,,,,,,,,,,
+,Site Pollution,5000,USD,,,,,,,,,,
+,Excess Policies,5000,USD,,,,,,,,,,
+# General Conditions,,,,,,,,,,,,,
+,Internet - Starlink,2400,USD,,,,,,,,,,
+,Portables / Toilet,3000,USD,,,,,,,,,,
+,Fencing,10000,USD,,,,,,,,,,
+,Battery Generator,5000,USD,,,,,,,,,,
+,Telco,1800,USD,,,,,,,,,,
+,Tech & Tools,18000,USD,,,,,,,,,,
+,Trailor,9000,USD,,,,,,,,,,
+# Other P&L Assumptions,,,,,,,,,,,,,
+,Carbon Credit Commission year 1,0.05,ratio,,,,,,,,,,
+,Carbon Credit Commission year 2,0.04,ratio,,,,,,,,,,
+,Carbon Credit Commission year 3,0.03,ratio,,,,,,,,,,
+,Carbon Credit Commission year 4,0.02,ratio,,,,,,,,,,
+,Carbon Credit Commission year 5,0.01,ratio,,,,,,,,,,
+,Long Tonne (lbs/metric ton),2200,lbs,,,,,,,,,,
+# Project Parameters,,,,,,,,,,,,,
+,Elevation (ft),5,feet,,,,,,,,,,
+,Acres,256,acres,,,,,,,,,,
+,CORCs/acft,528,CORCs,,,,,,,,,,
+,CORC Sale Price,200,USD,,,,,,,,,,
+,Truck Loads,16,loads,,,,,,,,,,
+,Hours of Injection,10,hours,,,,,,,,, ,

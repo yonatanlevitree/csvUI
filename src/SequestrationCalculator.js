@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, TrendingUp, DollarSign, Zap, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { Calculator, TrendingUp, DollarSign, Zap, ChevronDown, ChevronUp, Download, BarChart2 } from 'lucide-react';
 import logo from './logo_full copy.png';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const SequestrationCalculator = () => {
   // Input variables exactly as they appear in the CSV
@@ -332,198 +345,85 @@ const SequestrationCalculator = () => {
     return new Intl.NumberFormat('en-US').format(Math.round(value));
   };
 
-  const handleDownloadCSV = () => {
-    // Create CSV content
-    const csvRows = [];
-    
-    // Add header
-    csvRows.push('INPUT VALUES,,,,,,,,OUTPUT VALUES,,,,,,,');
-    csvRows.push('Section,Field,Value,Unit,Description,Formula,,,,Field,Value,Unit,Formula,,,,,');
-    
-    // Add Sequestration Assumptions section
-    csvRows.push('# Sequestration Assumptions,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Daily Hours') || key.startsWith('Total Days') || 
-          key.startsWith('Average Carbon') || key.startsWith('Wood Chip') || 
-          key.startsWith('CORC') || key.startsWith('Delivered Wood') || 
-          key.startsWith('Chipper') || key.startsWith('CO2e') || 
-          key.startsWith('Number of Wells') || key.startsWith('Well Drilling') || 
-          key.startsWith('Injection Rigs') || key.startsWith('Equipment Lease') || 
-          key.startsWith('Model Start') || key.startsWith('Injection Start')) {
-        // Find corresponding output if it exists
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+  const handleDownloadCSV = async () => {
+    // Fetch the template CSV from public directory
+    const response = await fetch('/attempt4.csv');
+    const template = await response.text();
+    const rows = template.split('\n');
+
+    // Helper to get value from state by field name
+    const getValue = (field) => {
+      if (outputs[field] !== undefined) return outputs[field];
+      if (inputs[field] !== undefined) return inputs[field];
+      return '';
+    };
+
+    // Replace values in the template
+    const newRows = rows.map(row => {
+      const cols = row.split(',');
+      if (cols[1] && typeof cols[2] !== 'undefined') {
+        const inputField = cols[1].trim();
+        if (inputField) {
+          const val = getValue(inputField);
+          if (val !== undefined && val !== null && val !== '') cols[2] = val;
+        }
       }
-    });
-
-    // Add Assumptions section
-    csvRows.push('# Assumptions,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Number of Projects') || key.startsWith('Total Hours') || 
-          key.startsWith('Wood Chip') || key.startsWith('Pulp') || 
-          key.startsWith('Organic Carbon') || key.startsWith('TSB') || 
-          key.startsWith('Puro')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+      if (cols[9] && typeof cols[10] !== 'undefined') {
+        const outputField = cols[9].trim();
+        if (outputField) {
+          const val = getValue(outputField);
+          if (val !== undefined && val !== null && val !== '') cols[10] = val;
+        }
       }
+      return cols.join(',');
     });
 
-    // Add Revenue section
-    csvRows.push('# Revenue,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Carbon Credit') || key.startsWith('Tip Fee')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
+    // --- Append P&L Summary and Operations Summary tables ---
+    const summaryHeaders = ['METRIC', 'PER 1 ACFT', 'TOTAL', 'CANALWAYS PROJECT'];
+    const metrics = [
+      {
+        label: 'Wood Chip Injection (Wet) Tonnes',
+        perAcft: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / 750) : '',
+        total: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5) : '',
+        canalways: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 * 80 / 750) : ''
+      },
+      {
+        label: '20 Tonne Truck Loads of Wood Chip (18.15 Tonnes of Cargo)',
+        perAcft: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / (750 * 18.5)) : '',
+        total: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / 18.5) : '',
+        canalways: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 * 80 / (750 * 18.5)) : ''
+      },
+      {
+        label: 'Total Hours of Injection',
+        perAcft: outputs["Total Hours of Injection"] ? Math.round(outputs["Total Hours of Injection"] * 5 / 750) : '',
+        total: outputs["Total Hours of Injection"] ? Math.round(outputs["Total Hours of Injection"] * 5) : '',
+        canalways: outputs["Total Hours of Injection"] ? Math.round(outputs["Total Hours of Injection"] * 5 * 80 / 750) : ''
       }
+    ];
+
+    // Add P&L Summary
+    newRows.push('');
+    newRows.push('P&L Summary,,,,');
+    newRows.push(summaryHeaders.join(','));
+    metrics.forEach(m => {
+      newRows.push([m.label, m.perAcft, m.total, m.canalways].join(','));
     });
 
-    // Add Pre-Construction Costs section
-    csvRows.push('# Pre-Construction Costs,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Land Lease') || key.startsWith('Engineering') || 
-          key.startsWith('Permitting') || key.startsWith('Legal') || 
-          key.startsWith('Site Work') || key.startsWith('Land Owner')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
-      }
+    // Add Operations Summary
+    newRows.push('');
+    newRows.push('Operations Summary,,,,');
+    newRows.push(summaryHeaders.join(','));
+    metrics.forEach(m => {
+      newRows.push([m.label, m.perAcft, m.total, m.canalways].join(','));
     });
 
-    // Add Injection Costs section
-    csvRows.push('# Injection Costs,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Setup Cost') || key.startsWith('Water Tank') || 
-          key.startsWith('Matts & Hoses') || key.startsWith('Other Slurry') || 
-          key.startsWith('Fuel & Energy') || key.startsWith('Levitree Equipment') || 
-          key.startsWith('Equipment Transportation')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
-      }
-    });
-
-    // Add Verification/Sales Costs section
-    csvRows.push('# Verification/Sales Costs,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Levitree License') || key.startsWith('Carbon Direct') || 
-          key.startsWith('Patch - Exchange') || key.startsWith('Puro Annual')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
-      }
-    });
-
-    // Add Consultants section
-    csvRows.push('# Consultants,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Developer Fee') || key.startsWith('Accounting & Tax') || 
-          key.startsWith('Jerry Gutierrez') || key.startsWith('Legal - Misc')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
-      }
-    });
-
-    // Add Insurance section
-    csvRows.push('# Insurance,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('General Liability') || key.startsWith('Property') || 
-          key.startsWith('Equipment') || key.startsWith('E&O') || 
-          key.startsWith('Cyber') || key.startsWith('Auto') || 
-          key.startsWith('Tail Coverage') || key.startsWith('Contractor Pollution') || 
-          key.startsWith('Site Pollution') || key.startsWith('Excess Policies')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
-      }
-    });
-
-    // Add General Conditions section
-    csvRows.push('# General Conditions,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Internet - Starlink') || key.startsWith('Portables') || 
-          key.startsWith('Fencing') || key.startsWith('Battery Generator') || 
-          key.startsWith('Telco') || key.startsWith('Tech & Tools') || 
-          key.startsWith('Trailor')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
-      }
-    });
-
-    // Add Other P&L Assumptions section
-    csvRows.push('# Other P&L Assumptions,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Carbon Credit Commission') || key.startsWith('Long Tonne')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
-      }
-    });
-
-    // Add Project Parameters section
-    csvRows.push('# Project Parameters,,,,,,,,,,,,,,,,,,');
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (key.startsWith('Elevation') || key.startsWith('Acres') || 
-          key.startsWith('CORCs/acft') || key.startsWith('CORC Sale Price') || 
-          key.startsWith('Truck Loads') || key.startsWith('Hours of Injection')) {
-        const outputKey = Object.keys(outputs).find(k => k.includes(key));
-        const outputValue = outputKey ? outputs[outputKey] : '';
-        const outputUnit = outputKey ? getUnitForOutput(outputKey) : '';
-        const outputFormula = outputKey ? getFormulaForOutput(outputKey) : '';
-        
-        csvRows.push(`,${key},${value},,,,,,,,,${outputKey || ''},${outputValue},${outputUnit},${outputFormula},,,,`);
-      }
-    });
-
-    // Add Project Summary section with all outputs
-    csvRows.push('# Project Summary,,,,,,,,,,,,,,,,,,');
-    Object.entries(outputs).forEach(([key, value]) => {
-      const unit = getUnitForOutput(key);
-      const formula = getFormulaForOutput(key);
-      csvRows.push(`,,,,,,,,,,${key},${value},${unit},${formula},,,,`);
-    });
-
-    // Create and download the file
-    const csvContent = csvRows.join('\n');
+    // Download the new CSV
+    const csvContent = newRows.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'attempt3.csv');
+    link.setAttribute('download', 'attempt4.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -776,6 +676,107 @@ const SequestrationCalculator = () => {
 
     return formula || '';
   };
+
+  // Helper to generate chart data for 5 years
+  const getAccumulatedChartData = (label, value, color, unit) => {
+    const years = [2025, 2026, 2027, 2028, 2029];
+    const data = years.map((_, i) => (value || 0) * (i + 1));
+    return {
+      labels: years.map(y => `${y}`),
+      datasets: [
+        {
+          label,
+          data,
+          borderColor: color,
+          backgroundColor: color + '33',
+          tension: 0.1,
+          fill: false,
+          pointRadius: 2,
+        },
+      ],
+      unit,
+    };
+  };
+  const getChartOptions = (unit) => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      title: { display: false },
+      tooltip: { 
+        enabled: true,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        titleColor: 'white',
+        bodyColor: 'white',
+        cornerRadius: 4,
+      },
+    },
+    layout: { 
+      padding: {
+        top: 10,
+        right: 10,
+        bottom: 10,
+        left: 10
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: { display: false },
+        grid: { 
+          display: true,
+          color: 'rgba(0,0,0,0.1)',
+          drawBorder: true,
+        },
+        ticks: { 
+          display: true, 
+          font: { size: 10 }, 
+          maxRotation: 0, 
+          minRotation: 0,
+          color: '#666'
+        },
+      },
+      y: {
+        display: true,
+        title: { 
+          display: true, 
+          text: unit, 
+          font: { size: 11 },
+          color: '#666'
+        },
+        grid: { 
+          display: true,
+          color: 'rgba(0,0,0,0.1)',
+          drawBorder: true,
+        },
+        ticks: { 
+          display: true, 
+          font: { size: 10 },
+          color: '#666'
+        },
+        beginAtZero: true,
+      },
+    },
+    elements: { 
+      line: { 
+        borderWidth: 2,
+        tension: 0.1
+      }, 
+      point: { 
+        radius: 3,
+        hoverRadius: 5
+      } 
+    },
+  });
+
+  // Add state for chart visibility
+  const [showWetChart, setShowWetChart] = useState(true);
+  const [showDryChart, setShowDryChart] = useState(true);
+  const [showPulpChart, setShowPulpChart] = useState(true);
+  const [showCO2eChart, setShowCO2eChart] = useState(true);
+  // Add state for CORC Production charts
+  const [showTotalCORCsChart, setShowTotalCORCsChart] = useState(true);
+  const [showAnnualCO2eChart, setShowAnnualCO2eChart] = useState(true);
 
   return (
     <div className="max-w-[2000px] mx-auto p-6 bg-gray-50 min-h-screen">
@@ -1343,31 +1344,96 @@ const SequestrationCalculator = () => {
           </div>
 
           {/* Annual Production */}
-          <div className="bg-white rounded-lg shadow p-6 mb-2">
+          <div className="bg-white rounded-lg shadow p-8 mb-2">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Annual Production</h2>
               <button onClick={() => toggleCard('annual')} className="p-1 rounded hover:bg-gray-100">
                 {openCards.annual ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </button>
             </div>
-            <div className={`transition-all duration-300 overflow-hidden ${openCards.annual ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-blue-600">Wood Chip Injection Rate (Wet) Annual</div>
-                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] || 0)} T</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">Wood Chip Injection Rate (Dry) Annual</div>
-                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry) Annual"] || 0)} T</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-purple-600">Pulp Injection Rate (Dry) Annual</div>
-                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Pulp Injection Rate (Dry) Annual"] || 0)} T</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-orange-600">CO2e Sequestration Rate (Metric Tonnes CO2e) Annual</div>
-                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"] || 0)} T</div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.annual ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}> 
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-12">
+      <div className="bg-blue-50 p-8 rounded-lg relative">
+        <button onClick={() => setShowWetChart(v => !v)} className="absolute top-3 right-3 p-1 bg-white rounded-full shadow hover:bg-gray-100">
+          <BarChart2 className={`w-5 h-5 ${showWetChart ? 'text-blue-600' : 'text-gray-400'}`} />
+        </button>
+        <div className="text-sm font-medium text-blue-600 w-full block text-left">Wood Chip Injection Rate (Wet) Annual</div>
+        <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] || 0)} T</div>
+        {showWetChart && outputs["Wood Chip Injection Rate (Wet) Annual"] !== undefined && (
+          <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
+            <Line
+              data={getAccumulatedChartData(
+                'Wood Chip Injection Rate (Wet) Annual',
+                outputs["Wood Chip Injection Rate (Wet) Annual"],
+                '#2563eb',
+                'Tonnes'
+              )}
+              options={getChartOptions('Tonnes')}
+            />
+          </div>
+        )}
+      </div>
+      <div className="bg-green-50 p-8 rounded-lg relative">
+        <button onClick={() => setShowDryChart(v => !v)} className="absolute top-3 right-3 p-1 bg-white rounded-full shadow hover:bg-gray-100">
+          <BarChart2 className={`w-5 h-5 ${showDryChart ? 'text-green-600' : 'text-gray-400'}`} />
+        </button>
+        <div className="text-sm font-medium text-green-600 w-full block text-left">Wood Chip Injection Rate (Dry) Annual</div>
+        <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry) Annual"] || 0)} T</div>
+        {showDryChart && outputs["Wood Chip Injection Rate (Dry) Annual"] !== undefined && (
+          <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
+            <Line
+              data={getAccumulatedChartData(
+                'Wood Chip Injection Rate (Dry) Annual',
+                outputs["Wood Chip Injection Rate (Dry) Annual"],
+                '#a855f7',
+                'Tonnes'
+              )}
+              options={getChartOptions('Tonnes')}
+            />
+          </div>
+        )}
+      </div>
+   
+                  <div className="bg-purple-50 p-8 rounded-lg relative">
+                    <button onClick={() => setShowPulpChart(v => !v)} className="absolute top-3 right-3 p-1 bg-white rounded-full shadow hover:bg-gray-100">
+                      <BarChart2 className={`w-5 h-5 ${showPulpChart ? 'text-purple-600' : 'text-gray-400'}`} />
+                    </button>
+                    <div className="text-sm font-medium text-purple-600 w-full block text-left">Pulp Injection Rate (Dry) Annual</div>
+                    <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Pulp Injection Rate (Dry) Annual"] || 0)} T</div>
+                    {showPulpChart && outputs["Pulp Injection Rate (Dry) Annual"] !== undefined && (
+                      <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
+                        <Line
+                          data={getAccumulatedChartData(
+                            'Pulp Injection Rate (Dry) Annual',
+                            outputs["Pulp Injection Rate (Dry) Annual"],
+                            '#f59e42',
+                            'Tonnes'
+                          )}
+                          options={getChartOptions('Tonnes')}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-orange-50 p-8 rounded-lg relative">
+                    <button onClick={() => setShowCO2eChart(v => !v)} className="absolute top-3 right-3 p-1 bg-white rounded-full shadow hover:bg-gray-100">
+                      <BarChart2 className={`w-5 h-5 ${showCO2eChart ? 'text-orange-600' : 'text-gray-400'}`} />
+                    </button>
+                    <div className="text-sm font-medium text-orange-600 w-full block text-left">CO2e Sequestration Rate (Metric Tonnes CO2e) Annual</div>
+                    <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"] || 0)} T</div>
+                    {showCO2eChart && outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"] !== undefined && (
+                      <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
+                        <Line
+                          data={getAccumulatedChartData(
+                            'CO2e Sequestration Rate (Metric Tonnes CO2e) Annual',
+                            outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"],
+                            '#10b981',
+                            'Tonnes CO2e'
+                          )}
+                          options={getChartOptions('Tonnes CO2e')}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1382,24 +1448,58 @@ const SequestrationCalculator = () => {
                 {openCards.corcprod ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </button>
             </div>
-            <div className={`transition-all duration-300 overflow-hidden ${openCards.corcprod ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-blue-600">CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour</div>
-                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"] || 0)} T/hr</div>
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.corcprod ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}> 
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-12">
+                  <div className="bg-blue-50 p-8 rounded-lg relative">
+                    <button onClick={() => setShowTotalCORCsChart(v => !v)} className="absolute top-3 right-3 p-1 bg-white rounded-full shadow hover:bg-gray-100">
+                      <BarChart2 className={`w-5 h-5 ${showTotalCORCsChart ? 'text-blue-600' : 'text-gray-400'}`} />
+                    </button>
+                    <div className="text-sm font-medium text-blue-600 w-full block text-left">Total CORCs Annual</div>
+                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Total CORCs Annual"] || 0)} CORCs</div>
+                    {showTotalCORCsChart && outputs["Total CORCs Annual"] !== undefined && (
+                      <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
+                        <Line
+                          data={getAccumulatedChartData(
+                            'Total CORCs Annual',
+                            outputs["Total CORCs Annual"],
+                            '#2563eb',
+                            'CORCs'
+                          )}
+                          options={getChartOptions('CORCs')}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-green-50 p-8 rounded-lg relative">
+                    <button onClick={() => setShowAnnualCO2eChart(v => !v)} className="absolute top-3 right-3 p-1 bg-white rounded-full shadow hover:bg-gray-100">
+                      <BarChart2 className={`w-5 h-5 ${showAnnualCO2eChart ? 'text-green-600' : 'text-gray-400'}`} />
+                    </button>
+                    <div className="text-sm font-medium text-green-600 w-full block text-left">Annual CO2e Sequestration</div>
+                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Annual CO2e Sequestration"] || 0)} T</div>
+                    {showAnnualCO2eChart && outputs["Annual CO2e Sequestration"] !== undefined && (
+                      <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
+                        <Line
+                          data={getAccumulatedChartData(
+                            'Annual CO2e Sequestration',
+                            outputs["Annual CO2e Sequestration"],
+                            '#10b981',
+                            'Tonnes CO2e'
+                          )}
+                          options={getChartOptions('Tonnes CO2e')}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-green-600">CORC Production Rate</div>
-                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["CORC Production Rate"] || 0)} CORCs/hr</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-purple-600">Total CORCs Annual</div>
-                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Total CORCs Annual"] || 0)} CORCs</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-sm font-medium text-orange-600">Annual CO2e Sequestration</div>
-                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["Annual CO2e Sequestration"] || 0)} T</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-blue-600">CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour</div>
+                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"] || 0)} T/hr</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-600">CORC Production Rate</div>
+                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["CORC Production Rate"] || 0)} CORCs/hr</div>
                   </div>
                 </div>
               </div>
