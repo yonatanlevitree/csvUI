@@ -346,21 +346,92 @@ const SequestrationCalculator = () => {
   };
 
   const handleDownloadCSV = () => {
-    // Get all input and output keys
-    const inputKeys = Object.keys(inputs);
-    const outputKeys = Object.keys(outputs);
-    const maxRows = Math.max(inputKeys.length, outputKeys.length);
+    // Define section groupings for inputs and outputs
+    const sections = [
+      {
+        name: 'Sequestration Assumptions',
+        inputs: [
+          'Daily Hours of Operation', 'Total Days of Injection', 'Average Carbon Credit Sale Price/CORC', 'Wood Chip Moisture Content', 'CORC Verifier Emission Discount Rate', 'Delivered Wood Consumption Rate per Hour (metric tons)', 'Chipper Truckloads Daily per Hour (4 metric tonnes each)', 'CO2e Sequestration Rate (Metric Tonnes CO2e)', 'Number of Wells', 'Well Drilling Cost/Foot', 'Injection Rigs Per Project', 'Equipment Lease Amount', 'Model Start Date', 'Injection Start Date'
+        ],
+        outputs: [
+          'Total Hours of Injection', 'Wood Chip Injection Rate (Wet)', 'Wood Chip Injection Rate (Dry)', 'Pulp Injection Rate (Dry)', 'Wood Chip Injection Rate (Wet) Annual', 'Wood Chip Injection Rate (Dry) Annual', 'Pulp Injection Rate (Dry) Annual', 'CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour', 'CO2e Sequestration Rate (Metric Tonnes CO2e) Annual', 'Total CORCs Annual', 'Annual CO2e Sequestration', 'Total Insurance Cost', 'Total Developer Fee', 'Total Accounting & Tax Cost'
+        ]
+      },
+      {
+        name: 'Assumptions',
+        inputs: [
+          'Number of Projects', 'Total Hours of Injection', 'Wood Chip Injection Rate (Wet)', 'Wood Chip Injection Rate (Dry)', 'Pulp Injection Rate (Dry)', 'Organic Carbon Content Wood Chips', 'Organic Carbon Content Pulp', 'TSB Methodology Premium Fee', 'CO2e Sequestration Rate (Metric Tonnes CO2e)', 'CORC Production Rate', 'Puro Service Fee Rate'
+        ],
+        outputs: [
+          'Total Jerry Gutierrez Labor Contract Cost', 'Total Legal Cost', 'General Conditions', 'Total Overhead Costs', 'Carbon Credit Sales', 'Tip Fee Revenue', 'Total Revenue', 'Total Variable Costs', 'Gross Margin', 'Net Profit before Land Owner Split', 'Land Owner Split Amount'
+        ]
+      },
+      {
+        name: 'Revenue',
+        inputs: ['Carbon Credit Sales', 'Tip Fee - related to rent below'],
+        outputs: ['Net Profit to SPE', 'Total CORCs', 'Total acft of Elevation']
+      },
+      {
+        name: 'Pre-Construction Costs',
+        inputs: ['Land Lease Cost', 'Engineering & Design', 'Permitting & Approvals', 'Legal', 'Site Work / Materials Yard - Pre-Construction', 'Land Owner Split'],
+        outputs: ['Total Truckloads', 'Total Hours of Injection', 'Total CORC Sale Price', 'Total Cost', 'Net Profit', 'Profit Margin', 'Wood Chip Injection (Wet) Tonnes']
+      },
+      {
+        name: 'Injection Costs',
+        inputs: ['Setup Cost', 'Water Tank Rental', 'Matts & Hoses', 'Other Slurry Ingredients Delivered', 'Fuel & Energy', 'Levitree Equipment Maintaince', 'Equipment Transportaion/Setup'],
+        outputs: ['20 Tonne Truck Loads of Wood Chip (18.15 Tonnes of Cargo)']
+      },
+      {
+        name: 'Verification/Sales Costs',
+        inputs: ['Levitree Liscense Fee', 'Carbon Direct', 'Patch - Exchange', 'Puro Annual Fee'],
+        outputs: []
+      },
+      {
+        name: 'Consultants',
+        inputs: ['Developer Fee', 'Accounting & Tax - Baker Tilly', 'Jerry Gutierrez Labor Contract', 'Legal - Misc'],
+        outputs: []
+      },
+      {
+        name: 'Insurance',
+        inputs: ['General Liability', 'Property', 'Equipment', 'E&O', 'Cyber', 'Auto', 'Tail Coverage', 'Contractor Pollution', 'Site Pollution', 'Excess Policies'],
+        outputs: []
+      },
+      {
+        name: 'General Conditions',
+        inputs: ['Internet - Starlink', 'Portables / Toilet', 'Fencing', 'Battery Generator', 'Telco', 'Tech & Tools', 'Trailor'],
+        outputs: []
+      },
+      {
+        name: 'Other P&L Assumptions',
+        inputs: ['Carbon Credit Commission year 1', 'Carbon Credit Commission year 2', 'Carbon Credit Commission year 3', 'Carbon Credit Commission year 4', 'Carbon Credit Commission year 5', 'Long Tonne (lbs/metric ton)'],
+        outputs: []
+      },
+      {
+        name: 'Project Parameters',
+        inputs: ['Elevation (ft)', 'Acres', 'CORCs/acft', 'CORC Sale Price', 'Truck Loads', 'Hours of Injecion'],
+        outputs: []
+      }
+    ];
 
-    // Build the CSV rows
+    // Build the CSV rows with formatting
     const csvRows = [];
+    csvRows.push('Calculated Metrics Export');
+    csvRows.push('');
     csvRows.push('Input Label,Input Value,,Output Label,Output Value');
-    for (let i = 0; i < maxRows; i++) {
-      const inputLabel = inputKeys[i] || '';
-      const inputValue = inputLabel ? (inputs[inputLabel] !== undefined ? inputs[inputLabel] : '') : '';
-      const outputLabel = outputKeys[i] || '';
-      const outputValue = outputLabel ? (outputs[outputLabel] !== undefined ? outputs[outputLabel] : '') : '';
-      csvRows.push(`"${inputLabel}","${inputValue}",,"${outputLabel}","${outputValue}"`);
-    }
+
+    // For each section, add section header, then rows, then a blank row
+    sections.forEach(section => {
+      csvRows.push('');
+      csvRows.push(section.name);
+      const maxRows = Math.max(section.inputs.length, section.outputs.length);
+      for (let i = 0; i < maxRows; i++) {
+        const inputLabel = section.inputs[i] || '';
+        const inputValue = inputLabel ? (inputs[inputLabel] !== undefined ? inputs[inputLabel] : '') : '';
+        const outputLabel = section.outputs[i] || '';
+        const outputValue = outputLabel ? (outputs[outputLabel] !== undefined ? outputs[outputLabel] : '') : '';
+        csvRows.push(`"${inputLabel}","${inputValue}",,"${outputLabel}","${outputValue}"`);
+      }
+    });
 
     // Download the new CSV
     const csvContent = csvRows.join('\n');
