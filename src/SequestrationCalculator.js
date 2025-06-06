@@ -345,99 +345,30 @@ const SequestrationCalculator = () => {
     return new Intl.NumberFormat('en-US').format(Math.round(value));
   };
 
-  const handleDownloadCSV = async () => {
-    // Fetch the template CSV from public directory
-    const response = await fetch('/attempt4.csv');
-    const template = await response.text();
-    const rows = template.split('\n');
+  const handleDownloadCSV = () => {
+    // Get all input and output keys
+    const inputKeys = Object.keys(inputs);
+    const outputKeys = Object.keys(outputs);
+    const maxRows = Math.max(inputKeys.length, outputKeys.length);
 
-    // Map CSV field names to output keys or calculations
-    const outputFieldMap = {
-      'Net Profit to SPE / Taxable Income': 'Net Profit to SPE / Taxable Income',
-      'Total Developer Fee': '__DEV_FEE__',
-      'Tip Fee Revenue': 'Tip Fee - related to rent below',
-      // Add more mappings as needed
-    };
-
-    // Helper to get value from state by field name or mapping
-    const getValue = (field) => {
-      // Special calculation for Total Developer Fee
-      if (outputFieldMap[field] === '__DEV_FEE__') {
-        return (inputs['Developer Fee'] * (outputs['Total Revenue'] || 0)) || '';
-      }
-      // Use mapped output key if present
-      const mappedKey = outputFieldMap[field] || field;
-      if (outputs[mappedKey] !== undefined) return outputs[mappedKey];
-      if (inputs[mappedKey] !== undefined) return inputs[mappedKey];
-      return '';
-    };
-
-    // Replace values in the template
-    const newRows = rows.map(row => {
-      const cols = row.split(',');
-      if (cols[1] && typeof cols[2] !== 'undefined') {
-        const inputField = cols[1].trim();
-        if (inputField) {
-          const val = getValue(inputField);
-          if (val !== undefined && val !== null && val !== '') cols[2] = val;
-        }
-      }
-      if (cols[9] && typeof cols[10] !== 'undefined') {
-        const outputField = cols[9].trim();
-        if (outputField) {
-          const val = getValue(outputField);
-          if (val !== undefined && val !== null && val !== '') cols[10] = val;
-        }
-      }
-      return cols.join(',');
-    });
-
-    // --- Append P&L Summary and Operations Summary tables ---
-    const summaryHeaders = ['METRIC', 'PER 1 ACFT', 'TOTAL', 'CANALWAYS PROJECT'];
-    const metrics = [
-      {
-        label: 'Wood Chip Injection (Wet) Tonnes',
-        perAcft: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / 750) : '',
-        total: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5) : '',
-        canalways: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 * 80 / 750) : ''
-      },
-      {
-        label: '20 Tonne Truck Loads of Wood Chip (18.15 Tonnes of Cargo)',
-        perAcft: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / (750 * 18.5)) : '',
-        total: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 / 18.5) : '',
-        canalways: outputs["Wood Chip Injection Rate (Wet) Annual"] ? Math.round(outputs["Wood Chip Injection Rate (Wet) Annual"] * 5 * 80 / (750 * 18.5)) : ''
-      },
-      {
-        label: 'Total Hours of Injection',
-        perAcft: outputs["Total Hours of Injection"] ? Math.round(outputs["Total Hours of Injection"] * 5 / 750) : '',
-        total: outputs["Total Hours of Injection"] ? Math.round(outputs["Total Hours of Injection"] * 5) : '',
-        canalways: outputs["Total Hours of Injection"] ? Math.round(outputs["Total Hours of Injection"] * 5 * 80 / 750) : ''
-      }
-    ];
-
-    // Add P&L Summary
-    newRows.push('');
-    newRows.push('P&L Summary,,,,');
-    newRows.push(summaryHeaders.join(','));
-    metrics.forEach(m => {
-      newRows.push([m.label, m.perAcft, m.total, m.canalways].join(','));
-    });
-
-    // Add Operations Summary
-    newRows.push('');
-    newRows.push('Operations Summary,,,,');
-    newRows.push(summaryHeaders.join(','));
-    metrics.forEach(m => {
-      newRows.push([m.label, m.perAcft, m.total, m.canalways].join(','));
-    });
+    // Build the CSV rows
+    const csvRows = [];
+    csvRows.push('Input Label,Input Value,,Output Label,Output Value');
+    for (let i = 0; i < maxRows; i++) {
+      const inputLabel = inputKeys[i] || '';
+      const inputValue = inputLabel ? (inputs[inputLabel] !== undefined ? inputs[inputLabel] : '') : '';
+      const outputLabel = outputKeys[i] || '';
+      const outputValue = outputLabel ? (outputs[outputLabel] !== undefined ? outputs[outputLabel] : '') : '';
+      csvRows.push(`"${inputLabel}","${inputValue}",,"${outputLabel}","${outputValue}"`);
+    }
 
     // Download the new CSV
-    const csvContent = newRows.join('\n');
+    const csvContent = csvRows.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'attempt4.csv');
+    link.setAttribute('download', 'calculatedMetrics.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -1365,15 +1296,15 @@ const SequestrationCalculator = () => {
                 {openCards.annual ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </button>
             </div>
-            <div className={`transition-all duration-300 overflow-hidden ${openCards.annual ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}> 
-  <div className="space-y-4">
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.annual ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="space-y-4">
     <div className="grid grid-cols-2 gap-12">
       <div className="bg-blue-50 p-8 rounded-lg relative">
         <button onClick={() => setShowWetChart(v => !v)} className="absolute top-3 right-3 p-1 bg-white rounded-full shadow hover:bg-gray-100">
           <BarChart2 className={`w-5 h-5 ${showWetChart ? 'text-blue-600' : 'text-gray-400'}`} />
         </button>
         <div className="text-sm font-medium text-blue-600 w-full block text-left">Wood Chip Injection Rate (Wet) Annual</div>
-        <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] || 0)} T</div>
+                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["Wood Chip Injection Rate (Wet) Annual"] || 0)} T</div>
         {showWetChart && outputs["Wood Chip Injection Rate (Wet) Annual"] !== undefined && (
           <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
             <Line
@@ -1385,7 +1316,7 @@ const SequestrationCalculator = () => {
               )}
               options={getChartOptions('Tonnes')}
             />
-          </div>
+                </div>
         )}
       </div>
       <div className="bg-green-50 p-8 rounded-lg relative">
@@ -1393,7 +1324,7 @@ const SequestrationCalculator = () => {
           <BarChart2 className={`w-5 h-5 ${showDryChart ? 'text-green-600' : 'text-gray-400'}`} />
         </button>
         <div className="text-sm font-medium text-green-600 w-full block text-left">Wood Chip Injection Rate (Dry) Annual</div>
-        <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry) Annual"] || 0)} T</div>
+                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["Wood Chip Injection Rate (Dry) Annual"] || 0)} T</div>
         {showDryChart && outputs["Wood Chip Injection Rate (Dry) Annual"] !== undefined && (
           <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
             <Line
@@ -1405,7 +1336,7 @@ const SequestrationCalculator = () => {
               )}
               options={getChartOptions('Tonnes')}
             />
-          </div>
+                </div>
         )}
       </div>
    
@@ -1414,7 +1345,7 @@ const SequestrationCalculator = () => {
                       <BarChart2 className={`w-5 h-5 ${showPulpChart ? 'text-purple-600' : 'text-gray-400'}`} />
                     </button>
                     <div className="text-sm font-medium text-purple-600 w-full block text-left">Pulp Injection Rate (Dry) Annual</div>
-                    <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Pulp Injection Rate (Dry) Annual"] || 0)} T</div>
+                  <div className="text-2xl font-bold text-purple-900">{formatNumber(outputs["Pulp Injection Rate (Dry) Annual"] || 0)} T</div>
                     {showPulpChart && outputs["Pulp Injection Rate (Dry) Annual"] !== undefined && (
                       <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
                         <Line
@@ -1426,7 +1357,7 @@ const SequestrationCalculator = () => {
                           )}
                           options={getChartOptions('Tonnes')}
                         />
-                      </div>
+                </div>
                     )}
                   </div>
                   <div className="bg-orange-50 p-8 rounded-lg relative">
@@ -1434,7 +1365,7 @@ const SequestrationCalculator = () => {
                       <BarChart2 className={`w-5 h-5 ${showCO2eChart ? 'text-orange-600' : 'text-gray-400'}`} />
                     </button>
                     <div className="text-sm font-medium text-orange-600 w-full block text-left">CO2e Sequestration Rate (Metric Tonnes CO2e) Annual</div>
-                    <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"] || 0)} T</div>
+                  <div className="text-2xl font-bold text-orange-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"] || 0)} T</div>
                     {showCO2eChart && outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Annual"] !== undefined && (
                       <div style={{ width: 200, height: 200, margin: '16px 0 0 0', position: 'relative' }}>
                         <Line
@@ -1462,8 +1393,8 @@ const SequestrationCalculator = () => {
                 {openCards.corcprod ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </button>
             </div>
-            <div className={`transition-all duration-300 overflow-hidden ${openCards.corcprod ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}> 
-              <div className="space-y-4">
+            <div className={`transition-all duration-300 overflow-hidden ${openCards.corcprod ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-12">
                   <div className="bg-blue-50 p-8 rounded-lg relative">
                     <button onClick={() => setShowTotalCORCsChart(v => !v)} className="absolute top-3 right-3 p-1 bg-white rounded-full shadow hover:bg-gray-100">
@@ -1506,15 +1437,15 @@ const SequestrationCalculator = () => {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-blue-600">CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour</div>
-                    <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"] || 0)} T/hr</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm font-medium text-green-600">CORC Production Rate</div>
-                    <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["CORC Production Rate"] || 0)} CORCs/hr</div>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-blue-600">CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour</div>
+                  <div className="text-2xl font-bold text-blue-900">{formatNumber(outputs["CO2e Sequestration Rate (Metric Tonnes CO2e) Per Hour"] || 0)} T/hr</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-green-600">CORC Production Rate</div>
+                  <div className="text-2xl font-bold text-green-900">{formatNumber(outputs["CORC Production Rate"] || 0)} CORCs/hr</div>
+                </div>
                 </div>
               </div>
             </div>
