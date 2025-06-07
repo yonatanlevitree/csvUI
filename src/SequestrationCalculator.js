@@ -121,9 +121,6 @@ const SequestrationCalculator = () => {
 
   const [outputs, setOutputs] = useState({});
 
-  // Add state to track which fields have been modified
-  const [modifiedFields, setModifiedFields] = useState({});
-
   // Collapsible state for each card
   const [openCards, setOpenCards] = useState({
     sequestration: true,
@@ -190,11 +187,6 @@ const SequestrationCalculator = () => {
     
     calc["Total Revenue"] = 5*(calc["Carbon Credit Sales"] + calc["Tip Fee - related to rent below"]);
     
-    console.log("Total CORCs Annual:", calc["Total CORCs Annual"]);
-    console.log("Average Carbon Credit Sale Price/CORC:", inputs["Average Carbon Credit Sale Price/CORC"]);
-    console.log("Carbon Credit Sales:", calc["Carbon Credit Sales"]);
-    console.log("Tip Fee - related to rent below:", calc["Tip Fee - related to rent below"]);
-    console.log("Total Revenue:", calc["Total Revenue"]);
     // Calculate service fees based on percentages
     calc["Levitree Liscense Fee Amount"] = calc["Carbon Credit Sales"] * inputs["Levitree Liscense Fee"];
     calc["Carbon Direct Amount"] = calc["Carbon Credit Sales"] * inputs["Carbon Direct"];
@@ -214,13 +206,13 @@ const SequestrationCalculator = () => {
     // Developer Fee calculation
     calc["Developer Fee Amount"] = calc["Carbon Credit Sales"] * inputs["Developer Fee"];
     
-    // Well Drilling calculation (from spreadsheet: Number of Wells * 25 * Well Drilling Cost/Foot)
+    // Well Drilling calculation
     calc["Well Drilling"] = (inputs["Number of Wells"] || 0) * 25 * (inputs["Well Drilling Cost/Foot"] || 0);
     
-    // Wood Biomass Processed/Delivered/Chipped calculation (from spreadsheet: (Wood Chip Injection Rate (Wet) Annual / 26) * 1000)
+    // Wood Biomass Processed/Delivered/Chipped calculation
     calc["Wood Biomass Processed/Delivered/Chipped"] = (calc["Wood Chip Injection Rate (Wet) Annual"] || 0) / 26 * 1000;
     
-    // Update the total variable cost calculation to include only the specified parameters
+    // Update the total variable cost calculation
     let totalVariableCosts = 0;
     for (let year = 1; year <= 5; year++) {
       const isFirstYear = (year === 1);
@@ -246,40 +238,16 @@ const SequestrationCalculator = () => {
         (calc["Patch - Exchange Amount"] || 0) +
         (inputs["Puro Annual Fee"] || 0) +
         (calc["Puro Service Fee Amount"] || 0);
-      if (year === 1) {
-        console.log("Engineering & Design:", inputs["Engineering & Design"]);
-        console.log("Permitting & Approvals:", inputs["Permitting & Approvals"]);
-        console.log("Legal:", inputs["Legal"]);
-        console.log("Site Work / Materials Yard - Pre-Construction:", inputs["Site Work / Materials Yard - Pre-Construction"]);
-        console.log("Setup Cost:", inputs["Setup Cost"]);
-        console.log("Land Lease Cost:", inputs["Land Lease Cost"]);
-        console.log("Well Drilling:", calc["Well Drilling"]);
-        console.log("Equipment Lease Amount (annualized):", ((inputs["Equipment Lease Amount"] || 0) * (inputs["Total Days of Injection"] || 0))/5);
-        console.log("Leased Commodity Equipment Rain 4 Rent:", inputs["Leased Commodity Equipment Rain 4 Rent"]);
-        console.log("Water Tank Rental:", inputs["Water Tank Rental"]);
-        console.log("Matts & Hoses:", inputs["Matts & Hoses"]);
-        console.log("Wood Biomass Processed/Delivered/Chipped:", calc["Wood Biomass Processed/Delivered/Chipped"]);
-        console.log("Other Slurry Ingredients Delivered Amount:", calc["Other Slurry Ingredients Delivered Amount"]);
-        console.log("Fuel & Energy Amount:", calc["Fuel & Energy Amount"]);
-        console.log("Levitree Equipment Maintaince:", inputs["Levitree Equipment Maintaince"]);
-        console.log("Equipment Transportaion/Setup:", inputs["Equipment Transportaion/Setup"]);
-        console.log("Levitree Liscense Fee Amount:", calc["Levitree Liscense Fee Amount"]);
-        console.log("Carbon Direct Amount:", calc["Carbon Direct Amount"]);
-        console.log("Patch - Exchange Amount:", calc["Patch - Exchange Amount"]);
-        console.log("Puro Annual Fee:", inputs["Puro Annual Fee"]);
-        console.log("Puro Service Fee Amount:", calc["Puro Service Fee Amount"]);
-      }
       totalVariableCosts += yearVariableCosts;
     }
     calc["Total Variable Costs"] = totalVariableCosts;
     
-    // Update the gross margin calculation to sum values for all 5 years
+    // Update the gross margin calculation
     let grossMargin = 0;
     for (let year = 1; year <= 5; year++) {
       const commissionRate = inputs[`Carbon Credit Commission year ${year}`] || 0;
       const annualCORCs = calc["CORC Production Rate"] * calc["Total Hours of Injection"];
       const margin = inputs["Carbon Credit Sales"] * annualCORCs;
-      console.log(`Year ${year}:`, { margin });
       grossMargin += margin;
     }
     calc["Gross Margin"] = grossMargin - calc["Total Variable Costs"];
@@ -316,15 +284,11 @@ const SequestrationCalculator = () => {
     setOutputs(calc);
   }, [inputs]);
 
-  // Update handleInputChange to track modifications
+  // Update handleInputChange to remove unused modifiedFields
   const handleInputChange = (key, value) => {
     setInputs(prev => ({
       ...prev,
       [key]: parseFloat(value) || 0
-    }));
-    setModifiedFields(prev => ({
-      ...prev,
-      [key]: true
     }));
   };
 
@@ -698,7 +662,7 @@ const SequestrationCalculator = () => {
     const years = [2025, 2026, 2027, 2028, 2029];
     const data = years.map((_, i) => (value || 0) * (i + 1));
     return {
-      labels: years.map(y => `${y}`),
+      labels: years,
       datasets: [
         {
           label,
@@ -713,21 +677,26 @@ const SequestrationCalculator = () => {
       unit,
     };
   };
+
   const getChartOptions = (unit) => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
-      title: { display: false },
-      tooltip: { 
+      legend: {
+        display: false,
+      },
+      tooltip: {
         enabled: true,
         backgroundColor: 'rgba(0,0,0,0.8)',
         titleColor: 'white',
         bodyColor: 'white',
         cornerRadius: 4,
+        callbacks: {
+          label: (context) => `${context.dataset.label}: ${formatNumber(context.raw)} ${unit}`,
+        },
       },
     },
-    layout: { 
+    layout: {
       padding: {
         top: 10,
         right: 10,
@@ -738,59 +707,62 @@ const SequestrationCalculator = () => {
     scales: {
       x: {
         display: true,
-        title: { display: false },
-        grid: { 
+        grid: {
           display: true,
           color: 'rgba(0,0,0,0.1)',
           drawBorder: true,
         },
-        ticks: { 
-          display: true, 
-          font: { size: 10 }, 
-          maxRotation: 0, 
-          minRotation: 0,
-          color: '#666'
+        ticks: {
+          maxRotation: 0,
+          autoSkip: true,
+          color: '#666',
+          font: {
+            size: 10
+          }
         },
       },
       y: {
         display: true,
-        title: { 
-          display: true, 
-          text: unit, 
-          font: { size: 11 },
+        title: {
+          display: true,
+          text: unit,
+          font: {
+            size: 11
+          },
           color: '#666'
         },
-        grid: { 
+        grid: {
           display: true,
           color: 'rgba(0,0,0,0.1)',
           drawBorder: true,
         },
-        ticks: { 
-          display: true, 
-          font: { size: 10 },
-          color: '#666'
+        ticks: {
+          callback: (value) => formatNumber(value),
+          color: '#666',
+          font: {
+            size: 10
+          }
         },
         beginAtZero: true,
       },
     },
-    elements: { 
-      line: { 
+    elements: {
+      line: {
         borderWidth: 2,
         tension: 0.1
-      }, 
-      point: { 
+      },
+      point: {
         radius: 3,
         hoverRadius: 5
-      } 
+      }
     },
   });
 
-  // Add state for chart visibility
+  // Add back necessary chart state variables
   const [showWetChart, setShowWetChart] = useState(true);
   const [showDryChart, setShowDryChart] = useState(true);
   const [showPulpChart, setShowPulpChart] = useState(true);
   const [showCO2eChart, setShowCO2eChart] = useState(true);
-  // Add state for CORC Production charts
   const [showTotalCORCsChart, setShowTotalCORCsChart] = useState(true);
   const [showAnnualCO2eChart, setShowAnnualCO2eChart] = useState(true);
 
@@ -866,9 +838,6 @@ const SequestrationCalculator = () => {
                         onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -884,9 +853,6 @@ const SequestrationCalculator = () => {
                       onChange={(e) => handleInputChange("Wood Chip Moisture Content", e.target.value)}
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {!modifiedFields["Wood Chip Moisture Content"] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
                   </div>
                 </div>
                 <div>
@@ -901,9 +867,6 @@ const SequestrationCalculator = () => {
                       onChange={(e) => handleInputChange("Delivered Wood Consumption Rate per Hour (metric tons)", e.target.value)}
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {!modifiedFields["Delivered Wood Consumption Rate per Hour (metric tons)"] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
                   </div>
                 </div>
                 <div>
@@ -917,9 +880,6 @@ const SequestrationCalculator = () => {
                       onChange={(e) => handleInputChange("Chipper Truckloads Daily per Hour (4 metric tonnes each)", e.target.value)}
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {!modifiedFields["Chipper Truckloads Daily per Hour (4 metric tonnes each)"] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
                   </div>
                 </div>
                 
@@ -935,9 +895,6 @@ const SequestrationCalculator = () => {
                       onChange={(e) => handleInputChange("Number of Wells", e.target.value)}
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {!modifiedFields["Number of Wells"] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
                   </div>
                 </div>
                 <div>
@@ -952,9 +909,6 @@ const SequestrationCalculator = () => {
                       onChange={(e) => handleInputChange("CORC Verifier Emission Discount Rate", e.target.value)}
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {!modifiedFields["CORC Verifier Emission Discount Rate"] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -981,9 +935,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1020,9 +971,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1050,9 +998,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1069,9 +1014,6 @@ const SequestrationCalculator = () => {
                       onChange={e => handleInputChange("Land Owner Split", e.target.value)}
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {!modifiedFields["Land Owner Split"] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1098,9 +1040,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1116,9 +1055,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange("Water Tank Rental", e.target.value)}
                     className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {!modifiedFields["Water Tank Rental"] && (
-                    <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                  )}
                 </div>
               </div>
               </div>
@@ -1145,9 +1081,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1175,9 +1108,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1205,9 +1135,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1235,9 +1162,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1265,9 +1189,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(`Carbon Credit Commission year ${year}`, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[`Carbon Credit Commission year ${year}`] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
@@ -1281,9 +1202,6 @@ const SequestrationCalculator = () => {
                       onChange={e => handleInputChange("Long Tonne (lbs/metric ton)", e.target.value)}
                       className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {!modifiedFields["Long Tonne (lbs/metric ton)"] && (
-                      <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1310,9 +1228,6 @@ const SequestrationCalculator = () => {
                     onChange={(e) => handleInputChange(field, e.target.value)}
                         className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                      {!modifiedFields[field] && (
-                        <span className="absolute left-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">(Default)</span>
-                      )}
                     </div>
                 </div>
               ))}
